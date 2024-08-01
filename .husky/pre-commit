@@ -1,0 +1,9 @@
+#!/bin/sh
+
+set -ex
+
+echo "Formatting before doing commit..."
+pnpm run format
+
+echo "Re-adding all files..."
+git add .

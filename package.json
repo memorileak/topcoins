@@ -1,0 +1,22 @@
+{
+  "name": "trinance",
+  "version": "1.6.3",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "prepare": "husky",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "format": "prettier --write \"**/*.ts\"",
+    "dev": "pnpm exec turbo run dev --concurrency=16",
+    "build": "pnpm exec turbo run build --concurrency=16",
+    "start": "pnpm --filter='./apps/**' run start:prod"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "husky": "^9.0.5",
+    "prettier": "^3.0.0",
+    "turbo": "^1.11.3"
+  }
+}

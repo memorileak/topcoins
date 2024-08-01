@@ -1,0 +1,20 @@
+{
+  "name": "tsconfig",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "build": "pnpm exec rimraf dist && pnpm exec mkdirp dist",
+    "dev": "node -e 'process.exit(0)'",
+    "lint": "node -e 'process.exit(0)'",
+    "format": "node -e 'process.exit(0)'"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@types/node": "20.10.0",
+    "mkdirp": "3.0.1",
+    "rimraf": "5.0.5"
+  }
+}
