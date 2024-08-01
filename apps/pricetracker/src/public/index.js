@@ -1,4 +1,4 @@
-const HIST_SIZE = 24;
+window.HIST_SIZE = localStorage.getItem('HIST_SIZE') || 24;
 
 function getTopTokensData() {
   return new Promise((resolve, reject) => {

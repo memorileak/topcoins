@@ -1,9 +1,35 @@
-.horizon-half {
-  width: 100%;
-  height: 50vh;
-  overflow-y: auto;
-}
-
 .cursor-pointer {
   cursor: pointer;
 }
+
+#table_toptokens {
+  table-layout: fixed;
+  width: 100%;
+}
+
+#table_toptokens td {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+#table_toptokens th:nth-child(1) {
+  width: 10%;
+}
+
+#table_toptokens th:nth-child(2) {
+  width: 10%;
+}
+
+#table_toptokens th:nth-child(3) {
+  width: 40%;
+}
+
+#table_toptokens th:nth-child(4) {
+  width: auto;
+}
+
+#table_toptokens th:nth-child(5) {
+  width: auto;
+}
+
