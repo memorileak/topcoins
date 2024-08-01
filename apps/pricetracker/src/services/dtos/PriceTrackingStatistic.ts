@@ -100,7 +100,7 @@ export class PriceTrackingStatistic {
 
   toJsonObject(): Record<string, any> {
     return {
-      latestPrices: this.getLastestPrice(),
+      latestPrice: this.getLastestPrice(),
       intervalPrices: this.getIntervalPrices(),
       intervalVelocities: this.getIntervalVelocities(),
       intervalAccelerations: this.getIntervalAccelerations(),

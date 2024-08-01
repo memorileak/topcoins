@@ -1,6 +1,7 @@
+import {join} from 'node:path';
 import {Module, OnApplicationBootstrap} from '@nestjs/common';
 import {ConfigModule, ConfigService} from '@nestjs/config';
-import {ScheduleModule} from '@nestjs/schedule';
+import {ServeStaticModule} from '@nestjs/serve-static';
 
 import {PriceTracker} from './services/impls/PriceTracker';
 import {PriceTrackerConfig} from './services/impls/PriceTrackerConfig';
@@ -9,7 +10,16 @@ import {BinanceStreamConsumer} from './services/impls/BinanceStreamConsumer';
 import {TopTokensController} from './controllers/TopTokensController';
 
 @Module({
-  imports: [ConfigModule.forRoot(), ScheduleModule.forRoot()],
+  imports: [
+    ConfigModule.forRoot(),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, 'public'),
+      exclude: ['toptokens'],
+      serveStaticOptions: {
+        index: 'index.html',
+      },
+    }),
+  ],
   controllers: [TopTokensController],
   providers: [PriceTrackerConfig, BinanceStreamConsumer, PriceTracker],
 })
