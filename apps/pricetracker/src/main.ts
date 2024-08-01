@@ -16,7 +16,7 @@ async function bootstrap() {
     ],
   });
   const port = app.get(ConfigService).get<string>('SERVER_PORT', '3000') || 3000;
-  app.get(PriceTracker).start();
+  app.enableCors();
   await app.listen(port);
 }
 
