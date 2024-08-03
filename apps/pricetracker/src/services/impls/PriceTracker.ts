@@ -105,10 +105,20 @@ export class PriceTracker {
       }
       topTokens = topTokens
         .sort(
-          (a, b) => (b.intervalVelocities[0] || -Infinity) - (a.intervalVelocities[0] || -Infinity),
+          (a, b) =>
+            this.sumMostRecentVelocs(b.intervalVelocities).unwrapOr(0) -
+            this.sumMostRecentVelocs(a.intervalVelocities).unwrapOr(0),
         )
-        .slice(0, 50);
+        .slice(0, this.priceTrackerConfig.topTokensListSize);
       return topTokens;
+    });
+  }
+
+  private sumMostRecentVelocs(velocities: number[]): Result<number> {
+    return Result.fromExecution(() => {
+      const MOST_RECENT_LIST_SIZE = 15;
+      const mostRecentVelocs = velocities.slice(0, MOST_RECENT_LIST_SIZE);
+      return mostRecentVelocs.reduce((c, n) => c + n, 0);
     });
   }
 }

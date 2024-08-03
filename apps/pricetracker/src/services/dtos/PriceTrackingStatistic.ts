@@ -58,7 +58,7 @@ export class PriceTrackingStatistic {
         currentVeloc = dTime ? this.round(dPrice / dTime).unwrap() : 0;
         if (prevVeloc !== undefined) {
           const dVeloc = currentVeloc - prevVeloc;
-          currentAcclr = this.round(dVeloc / dTime).unwrap();
+          currentAcclr = dTime ? this.round(dVeloc / dTime).unwrap() : 0;
         }
       }
 
