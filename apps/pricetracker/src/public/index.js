@@ -22,6 +22,7 @@ function getTopTokensData() {
 //     ],
 //     intervalVelocities: [23.29, 12.51],
 //     intervalAccelerations: [0.04],
+//     intervalRSI14: [30.00],
 //     symbol: 'ARBUSDT',
 //   },
 // ]
@@ -34,8 +35,8 @@ function renderTopTokensTable(topTokens) {
         <td>${renderSymbol(token.symbol, isBullish)}</td>
         <td>${renderLatestPrice(token.latestPrice, isBullish)}</td>
         <td>${renderPrices(token.intervalPrices)}</td>
+        <td>${renderRSI14(token.intervalRSI14)}</td>
         <td>${renderVelocities(token.intervalVelocities)}</td>
-        <td>${renderAccelerations(token.intervalAccelerations)}</td>
       </tr>
     `
       .trim()
@@ -83,15 +84,20 @@ function renderVelocities(velocities) {
     .join('<br>');
 }
 
-function renderAccelerations(accelerations) {
-  const acclrChunks = separateInChunks(accelerations.slice(0, HIST_SIZE));
-  return acclrChunks
-    .map((chunk) =>
-      chunk
-        .map((a) => `<span class="${a > 0 ? 'text-success fw-bold' : 'text-danger'}">${a}</span>`)
-        .join(', '),
-    )
-    .join('<br>');
+//function renderAccelerations(accelerations) {
+//  const acclrChunks = separateInChunks(accelerations.slice(0, HIST_SIZE));
+//  return acclrChunks
+//    .map((chunk) =>
+//      chunk
+//        .map((a) => `<span class="${a > 0 ? 'text-success fw-bold' : 'text-danger'}">${a}</span>`)
+//        .join(', '),
+//    )
+//    .join('<br>');
+//}
+
+function renderRSI14(rsi14Values) {
+  const rsi14Chunks = separateInChunks(rsi14Values.slice(0, HIST_SIZE));
+  return rsi14Chunks.map((chunk) => chunk.map((r) => `<span>${r}</span>`).join(', ')).join('<br>');
 }
 
 function separateInChunks(list) {

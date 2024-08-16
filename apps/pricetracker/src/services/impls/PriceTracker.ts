@@ -33,17 +33,18 @@ export class PriceTracker {
         const message = messageOption.unwrap();
         if (Array.isArray(message.data)) {
           for (const e of message.data) {
-            PriceEvent.tryFromRawEvent(e).okThen((priceEvent) => {
+            const result = await PriceEvent.tryFromRawEvent(e).okThenAsync(async (priceEvent) => {
               if (/USDT$/.test(priceEvent.symbol)) {
                 if (!this.mapSymbolStatistic.has(priceEvent.symbol)) {
                   this.mapSymbolStatistic.set(
                     priceEvent.symbol,
-                    PriceTrackingStatistic.new(this.priceTrackerConfig),
+                    await PriceTrackingStatistic.new(this.priceTrackerConfig),
                   );
                 }
                 this.mapSymbolStatistic.get(priceEvent.symbol).pushPriceEvent(priceEvent).unwrap();
               }
             });
+            result.errThen((err: any) => this.logger.error(err.message || err, err.stack));
           }
         }
       } else {
@@ -62,36 +63,6 @@ export class PriceTracker {
     }
   }
 
-  //topVelocThroughTime: Array<Record<string, any>> = [];
-  //async debug(): Promise<void> {
-  //  while (true) {
-  //    const statisticData: Record<string, any> = {};
-  //    let topVeloc: Array<Record<string, any>> = [];
-  //
-  //    for (const [symbol, statistic] of this.mapSymbolStatistic) {
-  //      const statisticJsonObject = statistic.toJsonObject();
-  //      statisticData[symbol] = statisticJsonObject;
-  //      topVeloc.push({...statisticJsonObject, symbol});
-  //    }
-  //
-  //    topVeloc = topVeloc
-  //      .sort(
-  //        (a, b) => (b.intervalVelocities[0] || -Infinity) - (a.intervalVelocities[0] || -Infinity),
-  //      )
-  //      .slice(0, 20);
-  //
-  //    this.topVelocThroughTime.push({time: new Date().toISOString(), topVeloc});
-  //
-  //    await writeFile('./statistic-data.json', JSON.stringify(statisticData, null, 2));
-  //    await writeFile(
-  //      './top-veloc-through-time.json',
-  //      JSON.stringify(this.topVelocThroughTime, null, 2),
-  //    );
-  //    this.logger.log('Statistic data file updated.');
-  //    await this.delaySecs(this.priceTrackerConfig.priceTrackingIntervalSecs);
-  //  }
-  //}
-
   async start(): Promise<void[]> {
     return Promise.all([this.ingestPriceEvents(), this.indexIntervally()]);
   }
@@ -104,21 +75,9 @@ export class PriceTracker {
         topTokens.push({...statisticJsonObject, symbol});
       }
       topTokens = topTokens
-        .sort(
-          (a, b) =>
-            this.sumMostRecentVelocs(b.intervalVelocities).unwrapOr(0) -
-            this.sumMostRecentVelocs(a.intervalVelocities).unwrapOr(0),
-        )
+        .sort((a, b) => (a.intervalRSI14?.[0] || Infinity) - (b.intervalRSI14?.[0] || Infinity))
         .slice(0, this.priceTrackerConfig.topTokensListSize);
       return topTokens;
-    });
-  }
-
-  private sumMostRecentVelocs(velocities: number[]): Result<number> {
-    return Result.fromExecution(() => {
-      const MOST_RECENT_LIST_SIZE = 15;
-      const mostRecentVelocs = velocities.slice(0, MOST_RECENT_LIST_SIZE);
-      return mostRecentVelocs.reduce((c, n) => c + n, 0);
     });
   }
 }

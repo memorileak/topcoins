@@ -4,16 +4,20 @@ import {PriceTrackerConfig} from '../impls/PriceTrackerConfig';
 import {PriceEvent} from './PriceEvent';
 
 export class PriceTrackingStatistic {
-  static new(priceTrackerConfig: PriceTrackerConfig): PriceTrackingStatistic {
-    return new PriceTrackingStatistic(priceTrackerConfig);
+  static async new(priceTrackerConfig: PriceTrackerConfig): Promise<PriceTrackingStatistic> {
+    const priceTrackingStatistic = new PriceTrackingStatistic(priceTrackerConfig);
+    await priceTrackingStatistic.initializeTradingSignalsModule();
+    return priceTrackingStatistic;
   }
 
   private readonly priceTrackerConfig: PriceTrackerConfig;
+  private rsi14Indexer: any;
 
   private lastPriceEvent: Option<PriceEvent>;
   private intervalPrices: [number, number][];
   private intervalVelocities: number[];
   private intervalAccelerations: number[];
+  private intervalRSI14: number[];
 
   private constructor(priceTrackerConfig: PriceTrackerConfig) {
     this.priceTrackerConfig = priceTrackerConfig;
@@ -21,6 +25,12 @@ export class PriceTrackingStatistic {
     this.intervalPrices = [];
     this.intervalVelocities = [];
     this.intervalAccelerations = [];
+    this.intervalRSI14 = [];
+  }
+
+  private async initializeTradingSignalsModule(): Promise<void> {
+    const TradingSignals = await import('trading-signals');
+    this.rsi14Indexer = new TradingSignals.RSI(14);
   }
 
   pushPriceEvent(priceEvent: PriceEvent): Result<void> {
@@ -62,6 +72,9 @@ export class PriceTrackingStatistic {
         }
       }
 
+      this.rsi14Indexer.update(currentPrice);
+      const currentRSI14 = this.getCurrentRSI14().unwrapOr(0);
+
       this.intervalPrices.unshift([currentPrice, currentTime]);
       if (currentVeloc !== undefined) {
         this.intervalVelocities.unshift(currentVeloc);
@@ -69,17 +82,23 @@ export class PriceTrackingStatistic {
       if (currentAcclr !== undefined) {
         this.intervalAccelerations.unshift(currentAcclr);
       }
+      this.intervalRSI14.unshift(currentRSI14);
 
       if (this.intervalPrices.length > windowSize) {
         this.intervalPrices.pop();
         this.intervalVelocities.pop();
         this.intervalAccelerations.pop();
+        this.intervalRSI14.pop();
       }
     });
   }
 
   private round(num: number): Result<number> {
     return Result.fromExecution(() => Math.round(num * 100) / 100);
+  }
+
+  private getCurrentRSI14(): Result<number> {
+    return Result.fromExecution(() => parseFloat(this.rsi14Indexer.getResult().toFixed(2)));
   }
 
   getLastestPrice(): number {
@@ -98,12 +117,17 @@ export class PriceTrackingStatistic {
     return this.intervalAccelerations;
   }
 
+  getIntervalRSI14(): number[] {
+    return this.intervalRSI14;
+  }
+
   toJsonObject(): Record<string, any> {
     return {
       latestPrice: this.getLastestPrice(),
       intervalPrices: this.getIntervalPrices(),
       intervalVelocities: this.getIntervalVelocities(),
       intervalAccelerations: this.getIntervalAccelerations(),
+      intervalRSI14: this.getIntervalRSI14(),
     };
   }
 }
