@@ -2,7 +2,9 @@ import {join} from 'node:path';
 import {Module, OnApplicationBootstrap} from '@nestjs/common';
 import {ConfigModule, ConfigService} from '@nestjs/config';
 import {ServeStaticModule} from '@nestjs/serve-static';
+import {ScheduleModule} from '@nestjs/schedule';
 
+import {Crontab} from './services/impls/Crontab';
 import {PriceTracker} from './services/impls/PriceTracker';
 import {PriceTrackerConfig} from './services/impls/PriceTrackerConfig';
 import {BinanceStreamConsumer} from './services/impls/BinanceStreamConsumer';
@@ -19,9 +21,10 @@ import {TopTokensController} from './controllers/TopTokensController';
         index: 'index.html',
       },
     }),
+    ScheduleModule.forRoot(),
   ],
   controllers: [TopTokensController],
-  providers: [PriceTrackerConfig, BinanceStreamConsumer, PriceTracker],
+  providers: [Crontab, PriceTrackerConfig, BinanceStreamConsumer, PriceTracker],
 })
 export class AppModule implements OnApplicationBootstrap {
   constructor(
@@ -40,8 +43,6 @@ export class AppModule implements OnApplicationBootstrap {
         'BINANCE_STREAM_NAME',
         '!ticker_1h@arr@3000ms',
       ),
-      priceTrackingIntervalSecs:
-        parseInt(this.configService.get<string>('PRICE_TRACKING_INTERVAL_SECS', '300')) || 300,
       priceTrackingWindowSize:
         parseInt(this.configService.get<string>('PRICE_TRACKING_WINDOW_SIZE', '144')) || 144,
       topTokensListSize:

@@ -7,7 +7,6 @@ import {PriceTrackerConfigRaw} from '../types/PriceTrackerConfigRaw';
 export class PriceTrackerConfig {
   @Expose() binanceStreamURI = '';
   @Expose() binanceStreamName = '';
-  @Expose() priceTrackingIntervalSecs = 60;
   @Expose() priceTrackingWindowSize = 120;
   @Expose() topTokensListSize = 50;
 

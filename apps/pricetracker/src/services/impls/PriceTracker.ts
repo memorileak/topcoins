@@ -25,7 +25,7 @@ export class PriceTracker {
     });
   }
 
-  async ingestPriceEvents(): Promise<void> {
+  private async ingestPriceEvents(): Promise<void> {
     this.binanceStreamConsumer.setup();
     while (true) {
       const messageOption = this.binanceStreamConsumer.getMessage();
@@ -54,17 +54,16 @@ export class PriceTracker {
     }
   }
 
-  async indexIntervally(): Promise<void> {
-    while (true) {
+  index(): Result<void> {
+    return Result.fromExecution(() => {
       for (const [, statistic] of this.mapSymbolStatistic) {
         statistic.index().unwrap();
       }
-      await this.delaySecs(this.priceTrackerConfig.priceTrackingIntervalSecs);
-    }
+    });
   }
 
-  async start(): Promise<void[]> {
-    return Promise.all([this.ingestPriceEvents(), this.indexIntervally()]);
+  start(): Promise<void> {
+    return this.ingestPriceEvents();
   }
 
   getTopTokens(): Result<Record<string, any>[]> {
