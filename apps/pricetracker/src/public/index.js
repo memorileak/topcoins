@@ -15,6 +15,7 @@ function getTopTokensData() {
 // [
 //   {
 //     latestPrice: 0.6468,
+//     latestRSI14: 30.00,
 //     intervalPrices: [
 //       [0.6489, 1722523586773],
 //       [0.6444, 1722523286942],
@@ -33,7 +34,7 @@ function renderTopTokensTable(topTokens) {
     return `
       <tr class="cursor-pointer" data-symbol="${token.symbol}">
         <td>${renderSymbol(token.symbol, isBullish)}</td>
-        <td>${renderLatestPrice(token.latestPrice, isBullish)}</td>
+        <td>${renderLatestPriceAndRSI14(token.latestPrice, token.latestRSI14, isBullish)}</td>
         <td>${renderPrices(token.intervalPrices)}</td>
         <td>${renderRSI14(token.intervalRSI14)}</td>
         <td>${renderVelocities(token.intervalVelocities)}</td>
@@ -62,8 +63,11 @@ function renderSymbol(symbol, isBullish) {
   return `<span class="${isBullish ? 'text-success' : 'text-danger'}"><strong>${targetCoin}</strong>/${baseCoin}<span>`;
 }
 
-function renderLatestPrice(latestPrice, isBullish) {
-  return `<span class="${isBullish ? 'text-success' : 'text-danger'}"><strong>${latestPrice}</strong><span>`;
+function renderLatestPriceAndRSI14(latestPrice, latestRSI14, isBullish) {
+  return [
+    `<span class="${isBullish ? 'text-success' : 'text-danger'}"><strong>${latestPrice}</strong><span>`,
+    `<span class="${getRSI14ClassByValue(latestRSI14)}">${latestRSI14}</span>`,
+  ].join('<br>');
 }
 
 function renderPrices(prices) {
@@ -97,7 +101,24 @@ function renderVelocities(velocities) {
 
 function renderRSI14(rsi14Values) {
   const rsi14Chunks = separateInChunks(rsi14Values.slice(0, HIST_SIZE));
-  return rsi14Chunks.map((chunk) => chunk.map((r) => `<span>${r}</span>`).join(', ')).join('<br>');
+  return rsi14Chunks
+    .map((chunk) =>
+      chunk.map((r) => `<span class="${getRSI14ClassByValue(r)}">${r}</span>`).join(', '),
+    )
+    .join('<br>');
+}
+
+function getRSI14ClassByValue(rsiValue) {
+  let rClass = '';
+  if (rsiValue <= 30) {
+    rClass += 'text-danger';
+  } else if (rsiValue >= 70) {
+    rClass += 'text-success';
+  }
+  if (rsiValue <= 20 || rsiValue >= 80) {
+    rClass += ' fw-bold';
+  }
+  return rClass;
 }
 
 function separateInChunks(list) {

@@ -7,22 +7,23 @@
   width: 100%;
 }
 
-#table_toptokens td {
+#table_toptokens th,
+td {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
 #table_toptokens th:nth-child(1) {
-  width: 10%;
+  width: 15%;
 }
 
 #table_toptokens th:nth-child(2) {
-  width: 10%;
+  width: 15%;
 }
 
 #table_toptokens th:nth-child(3) {
-  width: 40%;
+  width: 30%;
 }
 
 #table_toptokens th:nth-child(4) {
@@ -32,4 +33,3 @@
 #table_toptokens th:nth-child(5) {
   width: auto;
 }
-
