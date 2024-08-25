@@ -110,12 +110,12 @@ function renderRSI14(rsi14Values) {
 
 function getRSI14ClassByValue(rsiValue) {
   let rClass = '';
-  if (rsiValue <= 30) {
+  if (rsiValue < 31) {
     rClass += 'text-danger';
   } else if (rsiValue >= 70) {
     rClass += 'text-success';
   }
-  if (rsiValue <= 20 || rsiValue >= 80) {
+  if (rsiValue < 21 || rsiValue >= 80) {
     rClass += ' fw-bold';
   }
   return rClass;
