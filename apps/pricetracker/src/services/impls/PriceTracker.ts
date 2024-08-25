@@ -41,7 +41,10 @@ export class PriceTracker {
                     await PriceTrackingStatistic.new(this.priceTrackerConfig),
                   );
                 }
-                this.mapSymbolStatistic.get(priceEvent.symbol).pushPriceEvent(priceEvent).unwrap();
+                this.mapSymbolStatistic
+                  .get(priceEvent.symbol)
+                  .pushPriceEventAndReCalLatestRSI14(priceEvent)
+                  .unwrap();
               }
             });
             result.errThen((err: any) => this.logger.error(err.message || err, err.stack));
@@ -74,7 +77,7 @@ export class PriceTracker {
         topTokens.push({...statisticJsonObject, symbol});
       }
       topTokens = topTokens
-        .sort((a, b) => (a.intervalRSI14?.[0] || Infinity) - (b.intervalRSI14?.[0] || Infinity))
+        .sort((a, b) => (a.latestRSI14 || Infinity) - (b.latestRSI14 || Infinity))
         .slice(0, this.priceTrackerConfig.topTokensListSize);
       return topTokens;
     });

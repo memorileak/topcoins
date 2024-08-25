@@ -12,8 +12,10 @@ export class PriceTrackingStatistic {
 
   private readonly priceTrackerConfig: PriceTrackerConfig;
   private rsi14Indexer: any;
+  private shouldReplaceLatestRSIPrice: boolean;
 
-  private lastPriceEvent: Option<PriceEvent>;
+  private latestPriceEvent: Option<PriceEvent>;
+  private latestRSI14: number;
   private intervalPrices: [number, number][];
   private intervalVelocities: number[];
   private intervalAccelerations: number[];
@@ -21,7 +23,11 @@ export class PriceTrackingStatistic {
 
   private constructor(priceTrackerConfig: PriceTrackerConfig) {
     this.priceTrackerConfig = priceTrackerConfig;
-    this.lastPriceEvent = Option.none();
+    this.rsi14Indexer = null;
+    this.shouldReplaceLatestRSIPrice = false;
+
+    this.latestPriceEvent = Option.none();
+    this.latestRSI14 = 0;
     this.intervalPrices = [];
     this.intervalVelocities = [];
     this.intervalAccelerations = [];
@@ -33,17 +39,31 @@ export class PriceTrackingStatistic {
     this.rsi14Indexer = new TradingSignals.RSI(14);
   }
 
-  pushPriceEvent(priceEvent: PriceEvent): Result<void> {
+  pushPriceEventAndReCalLatestRSI14(priceEvent: PriceEvent): Result<void> {
     return Result.fromExecution(() => {
-      this.lastPriceEvent = Option.some(priceEvent);
+      this.latestPriceEvent = Option.some(priceEvent);
+      this.latestRSI14 = this.calculateLatestRSI14(priceEvent).unwrap();
     });
+  }
+
+  private calculateLatestRSI14(priceEvent: PriceEvent): Result<number> {
+    return Result.fromExecution(() => {
+      // Update/ReplaceCurrent RSI + set shouldReplaceLatestRSIPrice flag to true
+      this.rsi14Indexer.update(priceEvent.price, this.shouldReplaceLatestRSIPrice);
+      this.shouldReplaceLatestRSIPrice = true;
+      return this.getCurrentRSI14().unwrapOr(0);
+    });
+  }
+
+  private getCurrentRSI14(): Result<number> {
+    return Result.fromExecution(() => parseFloat(this.rsi14Indexer.getResult().toFixed(2)));
   }
 
   index(): Result<void> {
     return Result.fromExecution(() => {
-      this.lastPriceEvent
-        .someThen((lastPriceEvent) => {
-          this.indexForPriceEvent(lastPriceEvent).unwrap();
+      this.latestPriceEvent
+        .someThen((latestPriceEvent) => {
+          this.indexForPriceEvent(latestPriceEvent).unwrap();
         })
         .unwrap()
         .unwrap();
@@ -72,7 +92,9 @@ export class PriceTrackingStatistic {
         }
       }
 
-      this.rsi14Indexer.update(currentPrice);
+      // Update/ReplaceCurrent RSI + reset shouldReplaceLatestRSIPrice flag
+      this.rsi14Indexer.update(currentPrice, this.shouldReplaceLatestRSIPrice);
+      this.shouldReplaceLatestRSIPrice = false;
       const currentRSI14 = this.getCurrentRSI14().unwrapOr(0);
 
       this.intervalPrices.unshift([currentPrice, currentTime]);
@@ -97,12 +119,12 @@ export class PriceTrackingStatistic {
     return Result.fromExecution(() => Math.round(num * 100) / 100);
   }
 
-  private getCurrentRSI14(): Result<number> {
-    return Result.fromExecution(() => parseFloat(this.rsi14Indexer.getResult().toFixed(2)));
+  getLatestPrice(): number {
+    return this.latestPriceEvent.isSome() ? this.latestPriceEvent.unwrap().price : 0;
   }
 
-  getLastestPrice(): number {
-    return this.lastPriceEvent.isSome() ? this.lastPriceEvent.unwrap().price : 0;
+  getLatestRSI14(): number {
+    return this.latestRSI14;
   }
 
   getIntervalPrices(): [number, number][] {
@@ -123,7 +145,8 @@ export class PriceTrackingStatistic {
 
   toJsonObject(): Record<string, any> {
     return {
-      latestPrice: this.getLastestPrice(),
+      latestPrice: this.getLatestPrice(),
+      latestRSI14: this.getLatestRSI14(),
       intervalPrices: this.getIntervalPrices(),
       intervalVelocities: this.getIntervalVelocities(),
       intervalAccelerations: this.getIntervalAccelerations(),
