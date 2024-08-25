@@ -65,7 +65,7 @@ function renderSymbol(symbol, isBullish) {
 
 function renderLatestPriceAndRSI14(latestPrice, latestRSI14, isBullish) {
   return [
-    `<span class="${isBullish ? 'text-success' : 'text-danger'}"><strong>${latestPrice}</strong><span>`,
+    `<span class="${isBullish ? 'text-success' : 'text-danger'}"><strong>${latestPrice}</strong></span>`,
     `<span class="${getRSI14ClassByValue(latestRSI14)}">${latestRSI14}</span>`,
   ].join('<br>');
 }
