@@ -26,7 +26,6 @@ export class PriceTracker {
   }
 
   private async ingestPriceEvents(): Promise<void> {
-    this.binanceStreamConsumer.setup();
     while (true) {
       const messageOption = this.binanceStreamConsumer.getMessage();
       if (messageOption.isSome()) {
