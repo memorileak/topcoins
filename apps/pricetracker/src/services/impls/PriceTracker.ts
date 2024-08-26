@@ -72,8 +72,15 @@ export class PriceTracker {
     return Result.fromExecution(() => {
       let topTokens: Record<string, any>[] = [];
       for (const [symbol, statistic] of this.mapSymbolStatistic) {
-        const statisticJsonObject = statistic.toJsonObject();
-        topTokens.push({...statisticJsonObject, symbol});
+        if (
+          statistic
+            .getIntervalVelocities()
+            .slice(0, 4)
+            .reduce((c, n) => c + n, 0) !== 0
+        ) {
+          const statisticJsonObject = statistic.toJsonObject();
+          topTokens.push({...statisticJsonObject, symbol});
+        }
       }
       topTokens = topTokens
         .sort((a, b) => (a.latestRSI14 || Infinity) - (b.latestRSI14 || Infinity))
