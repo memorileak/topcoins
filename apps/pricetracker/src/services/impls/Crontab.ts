@@ -1,6 +1,6 @@
 import {Injectable, Logger} from '@nestjs/common';
 import {Cron, CronExpression} from '@nestjs/schedule';
-import {Result} from '@trinance/devkit';
+import {Result} from '@topcoins/devkit';
 
 import {BinanceStreamConsumer} from './BinanceStreamConsumer';
 import {PriceTracker} from './PriceTracker';

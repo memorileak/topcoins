@@ -19,7 +19,7 @@
 //}
 
 import {Expose, plainToInstance} from 'class-transformer';
-import {Result} from '@trinance/devkit';
+import {Result} from '@topcoins/devkit';
 
 export class PriceEvent {
   static tryFromRawEvent(rawEvent: Record<string, any>): Result<PriceEvent> {

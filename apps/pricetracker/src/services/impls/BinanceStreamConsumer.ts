@@ -1,6 +1,6 @@
 import {WebSocket} from 'ws';
 import {Injectable, Logger} from '@nestjs/common';
-import {Option, Result} from '@trinance/devkit';
+import {Option, Result} from '@topcoins/devkit';
 
 import {PriceTrackerConfig} from './PriceTrackerConfig';
 

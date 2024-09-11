@@ -1,5 +1,5 @@
 import {Injectable, Logger} from '@nestjs/common';
-import {Result} from '@trinance/devkit';
+import {Result} from '@topcoins/devkit';
 
 import {PriceEvent} from '../dtos/PriceEvent';
 import {PriceTrackingStatistic} from '../dtos/PriceTrackingStatistic';
