@@ -152,7 +152,14 @@ export class PriceRepo {
           const query = `
             INSERT INTO ${klineTable} (symbol, open_time, close_time, volume, open_price, high_price, low_price, close_price) 
             VALUES ${matrix} 
-            ON CONFLICT (symbol, open_time) DO NOTHING;
+            ON CONFLICT (symbol, open_time)
+            DO UPDATE SET
+              close_time = excluded.close_time,
+              volume = excluded.volume,
+              open_price = excluded.open_price,
+              high_price = excluded.high_price,
+              low_price = excluded.low_price,
+              close_price = excluded.close_price;
           `
             .trim()
             .replace(/\s+/g, ' ');

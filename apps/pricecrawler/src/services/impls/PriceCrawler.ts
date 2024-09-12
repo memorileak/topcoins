@@ -67,7 +67,7 @@ export class PriceCrawler {
       for (const symbol of this.priceCrawlerConfig.symbolTrackingList) {
         let result: Result<any> = await this.binanceRestClient.getKline1DayInterval({
           symbol,
-          limit: 3,
+          limit: 6,
         });
         result = await result.okThenAsync(async (prices) => {
           (await this.priceRepo.bulkUpsertPriceKline1Day(prices)).unwrap();
