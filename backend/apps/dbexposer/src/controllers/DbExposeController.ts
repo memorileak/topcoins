@@ -1,4 +1,4 @@
-import {Body, Controller, Get, HttpException, HttpStatus, Logger, Post} from '@nestjs/common';
+import {Body, Controller, Get, HttpCode, HttpException, HttpStatus, Logger, Post} from '@nestjs/common';
 
 import {SqliteDatabase} from '../services/impls/SqliteDatabase';
 
@@ -14,6 +14,7 @@ export class DbExposeController {
   }
 
   @Post()
+  @HttpCode(200)
   async executeQuery(@Body('q') q: string): Promise<Record<string, any>[]> {
     let queryResult = await this.sqliteDatabase.query(q || '');
     queryResult = queryResult.errThen((err: any) => {
