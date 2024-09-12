@@ -1,10 +1,10 @@
 import {join} from 'node:path';
-import {existsSync, mkdirSync} from 'node:fs';
+import {existsSync} from 'node:fs';
 import {Injectable, Logger} from '@nestjs/common';
 import {Result} from '@topcoins/devkit';
 import * as sqlite3 from 'sqlite3';
 
-import {PriceCrawlerConfig} from './PriceCrawlerConfig';
+import {DbExposerConfig} from './DbExposerConfig';
 
 export class Database extends sqlite3.Database {}
 
@@ -15,20 +15,21 @@ export class SqliteDatabase {
   private db: Database;
   private initialized = false;
 
-  constructor(private readonly priceCrawlerConfig: PriceCrawlerConfig) {}
+  constructor(private readonly priceCrawlerConfig: DbExposerConfig) {}
 
   async initialize(): Promise<Result<void>> {
     return new Promise((resolve) => {
       const databaseDir = join(process.cwd(), '..', '..', 'database');
 
       if (!existsSync(databaseDir)) {
-        this.logger.debug(`Database directory does not exist, creating a new one: ${databaseDir}`);
-        mkdirSync(databaseDir);
+        const err = new Error(`Database directory does not exist: ${databaseDir}`);
+        this.logger.error(err.message || err, err.stack);
+        resolve(Result.err(err as any));
       }
 
       const databasePath = join(databaseDir, this.priceCrawlerConfig.databaseFileName);
 
-      this.db = new Database(databasePath, (err: any) => {
+      this.db = new Database(databasePath, sqlite3.OPEN_READONLY, (err: any) => {
         if (err) {
           this.logger.error(err.message || err, err.stack);
           resolve(Result.err(err));
@@ -41,7 +42,25 @@ export class SqliteDatabase {
     });
   }
 
-  getDb(): Result<Database> {
+  query(query: string): Promise<Result<Record<string, any>[]>> {
+    const sqliteDatabase = this;
+    return new Promise((resolve) => {
+      const getDbResult = this.getDb();
+      getDbResult.errThen((err) => resolve(Result.err(err as any)));
+      getDbResult.okThen((db) => {
+        db.all(query, [], function (err, rows) {
+          if (err) {
+            sqliteDatabase.logger.error(err.message || err, err.stack);
+            resolve(Result.err(err as any));
+          } else {
+            resolve(Result.ok(rows));
+          }
+        });
+      });
+    });
+  }
+
+  private getDb(): Result<Database> {
     return Result.fromExecution(() => {
       if (this.initialized) {
         return this.db;
