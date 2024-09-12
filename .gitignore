@@ -34,6 +34,8 @@ lerna-debug.log*
 **/dist
 **/node_modules
 **/.env
+**/database
+**/*.vim
 
 .fresh
 
