@@ -32,7 +32,11 @@ export class PriceRepo {
             symbol TEXT NOT NULL,
             open_time INTEGER NOT NULL,
             close_time INTEGER NOT NULL,
-            volume REAL NOT NULL,
+            base_vol REAL NOT NULL,
+            quot_vol REAL NOT NULL,
+            trades INTEGER NOT NULL,
+            taker_buy_base_vol REAL NOT NULL,
+            taker_buy_quot_vol REAL NOT NULL,
             open_price REAL NOT NULL,
             high_price REAL NOT NULL,
             low_price REAL NOT NULL,
@@ -58,7 +62,11 @@ export class PriceRepo {
             symbol TEXT NOT NULL,
             open_time INTEGER NOT NULL,
             close_time INTEGER NOT NULL,
-            volume REAL NOT NULL,
+            base_vol REAL NOT NULL,
+            quot_vol REAL NOT NULL,
+            trades INTEGER NOT NULL,
+            taker_buy_base_vol REAL NOT NULL,
+            taker_buy_quot_vol REAL NOT NULL,
             open_price REAL NOT NULL,
             high_price REAL NOT NULL,
             low_price REAL NOT NULL,
@@ -136,13 +144,17 @@ export class PriceRepo {
         let i = 0;
         while (i < klinePrices.length) {
           const batch = klinePrices.slice(i, i + batchSize);
-          const matrix = priceRepo.generateValuesMatrix(8, batch.length).unwrap();
+          const matrix = priceRepo.generateValuesMatrix(12, batch.length).unwrap();
           const values = batch
             .map((p) => [
               p.symbol,
               p.openTime,
               p.closeTime,
-              p.volume,
+              p.baseVol,
+              p.quotVol,
+              p.trades,
+              p.takerBuyBaseVol,
+              p.takerBuyQuotVol,
               p.openPrice,
               p.highPrice,
               p.lowPrice,
@@ -150,12 +162,28 @@ export class PriceRepo {
             ])
             .flat();
           const query = `
-            INSERT INTO ${klineTable} (symbol, open_time, close_time, volume, open_price, high_price, low_price, close_price) 
-            VALUES ${matrix} 
+            INSERT INTO ${klineTable} (
+              symbol,
+              open_time,
+              close_time,
+              base_vol,
+              quot_vol,
+              trades,
+              taker_buy_base_vol,
+              taker_buy_quot_vol,
+              open_price,
+              high_price,
+              low_price,
+              close_price
+            ) VALUES ${matrix} 
             ON CONFLICT (symbol, open_time)
             DO UPDATE SET
               close_time = excluded.close_time,
-              volume = excluded.volume,
+              base_vol = excluded.base_vol,
+              quot_vol = excluded.quot_vol,
+              trades = excluded.trades,
+              taker_buy_base_vol = excluded.taker_buy_base_vol,
+              taker_buy_quot_vol = excluded.taker_buy_quot_vol,
               open_price = excluded.open_price,
               high_price = excluded.high_price,
               low_price = excluded.low_price,

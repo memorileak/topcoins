@@ -27,8 +27,12 @@ export class PriceKline {
         highPrice: parseFloat(symbolPrice[2] as string),
         lowPrice: parseFloat(symbolPrice[3] as string),
         closePrice: parseFloat(symbolPrice[4] as string),
-        volume: parseFloat(symbolPrice[5] as string),
+        baseVol: parseFloat(symbolPrice[5] as string),
         closeTime: symbolPrice[6] as number,
+        quotVol: parseFloat(symbolPrice[7] as string),
+        trades: symbolPrice[8] as number,
+        takerBuyBaseVol: parseFloat(symbolPrice[9] as string),
+        takerBuyQuotVol: parseFloat(symbolPrice[10] as string),
       },
       {excludeExtraneousValues: true, exposeDefaultValues: true},
     );
@@ -37,7 +41,11 @@ export class PriceKline {
   @Expose() symbol: string = '';
   @Expose() openTime: number = 0;
   @Expose() closeTime: number = 0;
-  @Expose() volume: number = 0;
+  @Expose() baseVol: number = 0;
+  @Expose() quotVol: number = 0;
+  @Expose() trades: number = 0;
+  @Expose() takerBuyBaseVol: number = 0;
+  @Expose() takerBuyQuotVol: number = 0;
   @Expose() openPrice: number = 0;
   @Expose() highPrice: number = 0;
   @Expose() lowPrice: number = 0;
