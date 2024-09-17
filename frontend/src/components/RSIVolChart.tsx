@@ -162,8 +162,8 @@ const RSIVolChart: FC<Props> = ({interval, allSymbols, klineSeriesList, priceNow
           <CartesianGrid horizontal={false} vertical={false} />
           <XAxis dataKey="closeTimeDisplay" />
           <YAxis domain={[0, 100]} />
-          <ReferenceArea y1={80} y2={100} stroke="none" fill="#2ca02c80" label="OVERBOUGHT" />
-          <ReferenceArea y1={70} y2={80} stroke="none" fill="#2ca02c40" label="STRONG" />
+          <ReferenceArea y1={70} y2={100} stroke="none" fill="#2ca02c80" label="OVERBOUGHT" />
+          <ReferenceArea y1={60} y2={70} stroke="none" fill="#2ca02c40" label="STRONG" />
           <ReferenceArea y1={20} y2={30} stroke="none" fill="#d6272840" label="WEAK" />
           <ReferenceArea y1={0} y2={20} stroke="none" fill="#d6272880" label="OVERSOLD" />
           <ReferenceLine y={50} />

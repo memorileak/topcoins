@@ -1,7 +1,8 @@
 import {FC, useEffect, useRef} from 'react';
 
-import RSIVolChart, {RSIInterval} from './components/RSIVolChart';
 import {usePriceData} from './hooks/usePriceData';
+import RSIVolChart, {RSIInterval} from './components/RSIVolChart';
+import PricesTable from './components/PricesTable';
 
 const App: FC<{}> = () => {
   const {
@@ -34,13 +35,16 @@ const App: FC<{}> = () => {
   }, [reloadPriceKline1HSeriesList, reloadPriceKline1DSeriesList]);
 
   return (
-    <div className="w-full pt-16 pb-80">
+    <div className="w-full xl:w-11/12 xl:mx-auto pt-16 pb-64">
       <h1 className="text-3xl text-center font-bold mb-12">Top Coins</h1>
-      <div className="flex flex-wrap">
-        <div className="w-full lg:w-1/4 xl:1/6 mb-12 lg:mb-0">
+      <div className="flex flex-col-reverse xl:flex-row flex-wrap">
+        <div className="w-full xl:w-1/4 xl:1/6 mb-12">
           <h2 className="text-center text-sm text-zinc-600 font-bold">Prices</h2>
+          <div className="w-11/12 mx-auto xl:w-full pt-[10px]">
+            <PricesTable priceNowList={priceNowList} kline1DSeriesList={priceKline1DSeriesList} />
+          </div>
         </div>
-        <div className="w-full lg:w-3/4 xl:5/6">
+        <div className="w-full xl:w-3/4 xl:5/6 mb-12">
           <h2 className="text-center text-sm text-zinc-600 font-bold">RSI 14 & Volumes 1H</h2>
           <div className="w-full aspect-video mb-12">
             <RSIVolChart
