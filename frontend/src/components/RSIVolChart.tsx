@@ -10,6 +10,7 @@ import {
   Legend,
   ResponsiveContainer,
   ReferenceArea,
+  ReferenceLine,
 } from 'recharts';
 
 import {PriceKlineSeries, PriceNow} from '../services/PriceDataSource';
@@ -165,7 +166,12 @@ const RSIVolChart: FC<Props> = ({interval, allSymbols, klineSeriesList, priceNow
           <ReferenceArea y1={70} y2={80} stroke="none" fill="#2ca02c40" label="STRONG" />
           <ReferenceArea y1={20} y2={30} stroke="none" fill="#d6272840" label="WEAK" />
           <ReferenceArea y1={0} y2={20} stroke="none" fill="#d6272880" label="OVERSOLD" />
-          <Tooltip itemSorter={(d) => -(d.value as number)} />
+          <ReferenceLine y={50} />
+          <Tooltip
+            itemSorter={(d) => -(d.value as number)}
+            isAnimationActive={false}
+            wrapperStyle={{zIndex: 9999}}
+          />
           <Legend
             wrapperStyle={{cursor: 'pointer'}}
             onClick={({value: symbol}) => handleToggleSymbol(symbol)}
