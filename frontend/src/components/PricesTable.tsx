@@ -3,6 +3,10 @@ import cl from 'classnames';
 
 import {PriceKlineSeries, PriceNow} from '../services/PriceDataSource';
 
+function makeBinancePathParamOfSymbol(symbol: string): string {
+  return symbol.split('USDT')[0] + '_USDT';
+}
+
 type Props = {
   priceNowList: PriceNow[];
   kline1DSeriesList: PriceKlineSeries[];
@@ -63,7 +67,13 @@ const PricesTable: FC<Props> = ({priceNowList, kline1DSeriesList}) => {
             return (
               <tr key={p.symbol} className="bg-white border-b">
                 <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                  {p.symbol}
+                  <a
+                    href={`https://www.binance.com/trade/${makeBinancePathParamOfSymbol(p.symbol)}?type=spot`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {p.symbol}
+                  </a>
                 </th>
                 <td
                   className={cl('px-6 py-4', {
