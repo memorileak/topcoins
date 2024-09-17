@@ -33,6 +33,24 @@ const volrad: Record<RSIInterval, (v: number) => number> = {
 
 const compactNum = Intl.NumberFormat('en-US', {notation: 'compact'});
 
+function isEmptyObject(obj: object): boolean {
+  for (const prop in obj) {
+    if (Object.hasOwn(obj, prop)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function isAllFalsyObject(obj: object): boolean {
+  for (const prop in obj) {
+    if ((obj as any)[prop]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 const VolDot = (props: Record<string, any>) => {
   const {interval, cx, cy, stroke, payload, dataKey, activeSymbols} = props;
   const symbol = dataKey;
@@ -133,12 +151,17 @@ const RSIVolChart: FC<Props> = ({interval, allSymbols, klineSeriesList, priceNow
     (symbol: string) => {
       const newActiveSymbols = {...activeSymbols};
       if (activeSymbols[symbol]) {
-        for (let s in newActiveSymbols) {
-          delete newActiveSymbols[s];
+        newActiveSymbols[symbol] = false;
+        if (isAllFalsyObject(newActiveSymbols)) {
+          for (let s in newActiveSymbols) {
+            delete newActiveSymbols[s];
+          }
         }
       } else {
-        for (const s of allSymbols) {
-          newActiveSymbols[s] = false;
+        if (isEmptyObject(newActiveSymbols)) {
+          for (const s of allSymbols) {
+            newActiveSymbols[s] = false;
+          }
         }
         newActiveSymbols[symbol] = true;
       }
@@ -173,7 +196,7 @@ const RSIVolChart: FC<Props> = ({interval, allSymbols, klineSeriesList, priceNow
             wrapperStyle={{zIndex: 9999}}
           />
           <Legend
-            wrapperStyle={{cursor: 'pointer'}}
+            wrapperStyle={{cursor: 'pointer', userSelect: 'none'}}
             onClick={({value: symbol}) => handleToggleSymbol(symbol)}
           />
           {allSymbols.map((s, i) => (
