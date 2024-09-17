@@ -53,7 +53,7 @@ const PricesTable: FC<Props> = ({priceNowList, kline1DSeriesList}) => {
               Price
             </th>
             <th scope="col" className="px-6 py-3 overflow-hidden whitespace-nowrap text-ellipsis">
-              Chg today
+              Today
             </th>
           </tr>
         </thead>
