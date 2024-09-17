@@ -1,4 +1,4 @@
-import {FC, useMemo} from 'react';
+import {FC, useCallback, useMemo, useState} from 'react';
 import * as d3 from 'd3';
 import {
   LineChart,
@@ -9,30 +9,92 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  //BarChart,
-  //Bar,
+  ReferenceArea,
 } from 'recharts';
 
 import {PriceKlineSeries, PriceNow} from '../services/PriceDataSource';
+import {Result} from '../devkit';
 
-const hourFormatter = d3.timeFormat('%d/%m %H:%M');
+export enum RSIInterval {
+  _1Hour = '1h',
+  _1Day = '1d',
+}
+
+const timefmt: Record<RSIInterval, (d: Date) => string> = {
+  [RSIInterval._1Hour]: d3.timeFormat('%a %H:%M'),
+  [RSIInterval._1Day]: d3.utcFormat('%d/%m'),
+};
+
+const volrad: Record<RSIInterval, (v: number) => number> = {
+  [RSIInterval._1Hour]: d3.scaleLinear([1, 6e8], [2, 60]).clamp(true).unknown(2),
+  [RSIInterval._1Day]: d3.scaleLinear([1, 9e9], [2, 60]).clamp(true).unknown(2),
+};
+
+const compactNum = Intl.NumberFormat('en-US', {notation: 'compact'});
+
+const VolDot = (props: Record<string, any>) => {
+  const {interval, cx, cy, stroke, payload, dataKey, activeSymbols} = props;
+  const symbol = dataKey;
+  const quotVolKey = `quotVol_${symbol}`;
+  const quotVol = payload[quotVolKey];
+  const r = volrad[interval as RSIInterval](quotVol);
+  const color = d3.color(stroke)!.copy({opacity: 0.5}).formatHex8();
+  return (
+    <g>
+      <rect x={cx - r} y={cy - r} width={2 * r} height={2 * r} stroke={color} fill={color} />
+      {activeSymbols[symbol] ? (
+        <text
+          textAnchor="middle"
+          fontSize="smaller"
+          x={cx}
+          y={cy - r - 4}
+          stroke="none"
+          fill={stroke}
+        >
+          {compactNum.format(quotVol)}
+        </text>
+      ) : null}
+    </g>
+  );
+};
 
 type Props = {
+  interval: RSIInterval;
+  allSymbols: string[];
   klineSeriesList: PriceKlineSeries[];
   priceNowList: PriceNow[];
 };
 
-const RSIVolChart: FC<Props> = ({klineSeriesList, priceNowList}) => {
+const RSIVolChart: FC<Props> = ({interval, allSymbols, klineSeriesList, priceNowList}) => {
   const lineChartData = useMemo(() => {
     const chartData: Record<string, any>[] = [];
     const mapTimeRecord: Map<number, Record<string, any>> = new Map();
+    const mapSymbolPriceNow: Record<string, PriceNow> = {};
+
+    for (const p of priceNowList) {
+      mapSymbolPriceNow[p.symbol] = p;
+    }
 
     for (const klineSeries of klineSeriesList) {
-      for (const priceKline of klineSeries.priceKlineData) {
+      const priceKlineData = klineSeries.priceKlineData || [];
+      const latestKline = priceKlineData[priceKlineData.length - 1];
+
+      if (latestKline) {
+        latestKline.closePrice =
+          mapSymbolPriceNow[klineSeries.symbol]?.price ?? latestKline.closePrice;
+        klineSeries.rsi14Indexer.replace(latestKline.closePrice);
+        latestKline.rsi14 = Result.fromExecution(() =>
+          parseFloat(klineSeries.rsi14Indexer.getResult().toFixed(2)),
+        ).unwrapOr(0);
+      }
+
+      for (const priceKline of priceKlineData) {
         if (!mapTimeRecord.has(priceKline.closeTime)) {
           mapTimeRecord.set(priceKline.closeTime, {});
         }
         mapTimeRecord.get(priceKline.closeTime)![priceKline.symbol] = priceKline.rsi14;
+        mapTimeRecord.get(priceKline.closeTime)![`quotVol_${priceKline.symbol}`] =
+          priceKline.quotVol;
       }
     }
 
@@ -46,71 +108,83 @@ const RSIVolChart: FC<Props> = ({klineSeriesList, priceNowList}) => {
         chartData.push({
           ...data,
           closeTime,
-          closeTimeDisplay: hourFormatter(new Date(closeTime)),
+          closeTimeDisplay: timefmt[interval](new Date(closeTime)),
         });
       }
     }
 
     chartData.sort((a, b) => a.closeTime - b.closeTime);
 
-    return chartData;
-  //}, [klineSeriesList, priceNowList]);
-  }, [klineSeriesList]);
+    return chartData.slice(2 * 14);
+  }, [interval, klineSeriesList, priceNowList]);
 
-  const symbols = useMemo(() => priceNowList.map((p) => p.symbol), [priceNowList]);
+  const colorScale = useMemo(
+    () =>
+      d3.scaleQuantize(
+        [0, allSymbols.length],
+        d3.schemeCategory10.concat(d3.schemeSet1).concat(d3.schemeDark2).concat(d3.schemeTableau10),
+      ),
+    [allSymbols],
+  );
+
+  const [activeSymbols, setActiveSymbols] = useState<Record<string, boolean>>({});
+  const handleToggleSymbol = useCallback(
+    (symbol: string) => {
+      const newActiveSymbols = {...activeSymbols};
+      if (activeSymbols[symbol]) {
+        for (let s in newActiveSymbols) {
+          delete newActiveSymbols[s];
+        }
+      } else {
+        for (const s of allSymbols) {
+          newActiveSymbols[s] = false;
+        }
+        newActiveSymbols[symbol] = true;
+      }
+      setActiveSymbols(newActiveSymbols);
+    },
+    [allSymbols, activeSymbols],
+  );
 
   return (
     <>
-      <ResponsiveContainer width="50%" height="50%">
+      <ResponsiveContainer width="100%" height="100%">
         <LineChart
-          syncId="anyid"
           data={lineChartData}
           margin={{
-            top: 5,
-            right: 30,
-            left: 20,
-            bottom: 5,
+            top: 10,
+            right: 60,
+            left: 10,
+            bottom: 10,
           }}
         >
-          <CartesianGrid strokeDasharray="3 3" />
+          <CartesianGrid horizontal={false} vertical={false} />
           <XAxis dataKey="closeTimeDisplay" />
-          <YAxis />
-          <Tooltip />
+          <YAxis domain={[0, 100]} />
+          <ReferenceArea y1={80} y2={100} stroke="none" fill="#2ca02c80" label="OVERBOUGHT" />
+          <ReferenceArea y1={70} y2={80} stroke="none" fill="#2ca02c40" label="STRONG" />
+          <ReferenceArea y1={20} y2={30} stroke="none" fill="#d6272840" label="WEAK" />
+          <ReferenceArea y1={0} y2={20} stroke="none" fill="#d6272880" label="OVERSOLD" />
+          <Tooltip itemSorter={(d) => -(d.value as number)} />
           <Legend
-            onClick={(...anything) => {
-              console.log(anything);
-            }}
+            wrapperStyle={{cursor: 'pointer'}}
+            onClick={({value: symbol}) => handleToggleSymbol(symbol)}
           />
-          {symbols.map((s, i) => (
+          {allSymbols.map((s, i) => (
             <Line
+              hide={activeSymbols[s] === false}
               key={s}
               type="monotone"
+              strokeDasharray="5 1"
               dataKey={s}
-              stroke={d3.schemeCategory10[i % 10]}
-              activeDot={{r: 8}}
+              stroke={colorScale(i)}
+              dot={<VolDot interval={interval} activeSymbols={activeSymbols} />}
+              activeDot={false}
+              isAnimationActive={false}
             />
           ))}
         </LineChart>
       </ResponsiveContainer>
-      {/*<ResponsiveContainer width="50%" height="25%">
-        <BarChart
-          syncId="anyid"
-          data={klineData}
-          margin={{
-            top: 5,
-            right: 30,
-            left: 20,
-            bottom: 5,
-          }}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey={hourF} />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          <Bar dataKey="volume" fill="#8884d8" />
-        </BarChart>
-      </ResponsiveContainer>*/}
     </>
   );
 };

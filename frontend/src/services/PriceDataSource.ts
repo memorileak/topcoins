@@ -31,7 +31,11 @@ export class PriceKline {
       symbol: raw.symbol,
       openTime: raw.open_time,
       closeTime: raw.close_time,
-      volume: raw.volume,
+      baseVol: raw.base_vol,
+      quotVol: raw.quot_vol,
+      trades: raw.trades,
+      takerBuyBaseVol: raw.taker_buy_base_vol,
+      takerBuyQuotVol: raw.taker_buy_quot_vol,
       openPrice: raw.open_price,
       highPrice: raw.high_price,
       lowPrice: raw.low_price,
@@ -43,7 +47,11 @@ export class PriceKline {
     this.symbol = initData.symbol ?? this.symbol;
     this.openTime = initData.openTime ?? this.openTime;
     this.closeTime = initData.closeTime ?? this.closeTime;
-    this.volume = initData.volume ?? this.volume;
+    this.baseVol = initData.baseVol ?? this.baseVol;
+    this.quotVol = initData.quotVol ?? this.quotVol;
+    this.trades = initData.trades ?? this.trades;
+    this.takerBuyBaseVol = initData.takerBuyBaseVol ?? this.takerBuyBaseVol;
+    this.takerBuyQuotVol = initData.takerBuyQuotVol ?? this.takerBuyQuotVol;
     this.openPrice = initData.openPrice ?? this.openPrice;
     this.highPrice = initData.highPrice ?? this.highPrice;
     this.lowPrice = initData.lowPrice ?? this.lowPrice;
@@ -54,7 +62,11 @@ export class PriceKline {
   symbol: string = '';
   openTime: number = 0;
   closeTime: number = 0;
-  volume: number = 0;
+  baseVol: number = 0;
+  quotVol: number = 0;
+  trades: number = 0;
+  takerBuyBaseVol: number = 0;
+  takerBuyQuotVol: number = 0;
   openPrice: number = 0;
   highPrice: number = 0;
   lowPrice: number = 0;
@@ -63,6 +75,7 @@ export class PriceKline {
 }
 
 export type PriceKlineSeries = {
+  symbol: string;
   rsi14Indexer: RSI;
   priceKlineData: PriceKline[];
 };
@@ -76,7 +89,9 @@ export class PriceDataSource {
 
   getAllSymbols(): Promise<Result<string[]>> {
     return Result.fromExecutionAsync(async () => {
-      let result = await this.databaseClient.query(sql('SELECT DISTINCT symbol FROM price_now ORDER BY symbol ASC;'));
+      let result = await this.databaseClient.query(
+        sql('SELECT DISTINCT symbol FROM price_now ORDER BY symbol ASC;'),
+      );
       return result.unwrapOr([]).map((r) => r.symbol || '');
     });
   }
@@ -88,39 +103,53 @@ export class PriceDataSource {
     });
   }
 
-  getKline1HourIntervalOfSymbol(symbol: string, limit?: number): Promise<Result<PriceKlineSeries>> {
-    return this.getKlineDataOfSymbol('price_kline_1h', symbol, limit);
-  }
-
-  getKline1DayIntervalOfSymbol(symbol: string, limit?: number): Promise<Result<PriceKlineSeries>> {
-    return this.getKlineDataOfSymbol('price_kline_1d', symbol, limit);
-  }
-
-  private getKlineDataOfSymbol(
-    table: string,
-    symbol: string,
+  getKline1HourIntervalOfSymbols(
+    symbols: string[],
     limit?: number,
-  ): Promise<Result<PriceKlineSeries>> {
+  ): Promise<Result<PriceKlineSeries[]>> {
+    return this.getKlineDataOfSymbols('price_kline_1h', symbols, limit);
+  }
+
+  getKline1DayIntervalOfSymbols(
+    symbols: string[],
+    limit?: number,
+  ): Promise<Result<PriceKlineSeries[]>> {
+    return this.getKlineDataOfSymbols('price_kline_1d', symbols, limit);
+  }
+
+  private getKlineDataOfSymbols(
+    table: string,
+    symbols: string[],
+    limit?: number,
+  ): Promise<Result<PriceKlineSeries[]>> {
     return Result.fromExecutionAsync(async () => {
-      const lim = limit ?? 50;
-      let result = await this.databaseClient.query(
-        sql(
-          `SELECT * FROM ${escapeId(table)} WHERE symbol = ? ORDER BY open_time DESC LIMIT ? OFFSET 1;`,
-          [symbol, lim],
-        ),
+      const lim = limit ?? 64;
+      const queries = symbols.map((symbol) =>
+        sql(`SELECT * FROM ${escapeId(table)} WHERE symbol = ? ORDER BY open_time DESC LIMIT ?;`, [
+          symbol,
+          lim,
+        ]),
       );
-      const priceKlineData = result
-        .unwrapOr([])
-        .map((r) => PriceKline.fromRaw(r))
-        .reverse();
-      const rsi14Indexer = new RSI(14);
-      for (const pk of priceKlineData) {
-        rsi14Indexer.update(pk.closePrice);
-        pk.rsi14 = Result.fromExecution(() =>
-          parseFloat(rsi14Indexer.getResult().toFixed(2)),
-        ).unwrapOr(0);
+
+      const result = await this.databaseClient.query(queries);
+      const priceKlineSeriesListRaw = result.unwrapOr([]);
+      const priceKlineSeriesList: PriceKlineSeries[] = [];
+
+      for (let i = 0; i < priceKlineSeriesListRaw.length; i += 1) {
+        const priceKlineDataRaw = priceKlineSeriesListRaw[i];
+        const priceKlineData = priceKlineDataRaw.map((r) => PriceKline.fromRaw(r)).reverse();
+        const symbol = symbols[i];
+        const rsi14Indexer = new RSI(14);
+        for (const pk of priceKlineData) {
+          rsi14Indexer.update(pk.closePrice);
+          pk.rsi14 = Result.fromExecution(() =>
+            parseFloat(rsi14Indexer.getResult().toFixed(2)),
+          ).unwrapOr(0);
+        }
+        priceKlineSeriesList.push({symbol, rsi14Indexer, priceKlineData});
       }
-      return {rsi14Indexer, priceKlineData};
+
+      return priceKlineSeriesList;
     });
   }
 }
