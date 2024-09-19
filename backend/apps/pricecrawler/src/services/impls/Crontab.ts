@@ -17,6 +17,18 @@ export class Crontab {
     (await this.priceCrawler.crawlLatestDataOfPriceNow()).errThen(this.showError);
   }
 
+  @Cron('10 0-58/2 * * * *')
+  async runCrawlingKline1HourOfCurrentHour(): Promise<void> {
+    this.logger.debug('Running method: runCrawlingKline1HourOfCurrentHour');
+    (await this.priceCrawler.crawlKlineDataOfCurrentHour()).errThen(this.showError);
+  }
+
+  @Cron('10 1-59/2 * * * *')
+  async runCrawlingKline1DayOfCurrentDay(): Promise<void> {
+    this.logger.debug('Running method: runCrawlingKline1DayOfCurrentDay');
+    (await this.priceCrawler.crawlKlineDataOfCurrentDay()).errThen(this.showError);
+  }
+
   @Cron('0 1 * * * *')
   async runKline1HourCrawling(): Promise<void> {
     this.logger.debug('Running method: runKline1HourCrawling');

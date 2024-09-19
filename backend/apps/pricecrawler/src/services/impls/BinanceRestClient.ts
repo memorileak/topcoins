@@ -42,6 +42,20 @@ export class BinanceRestClient {
     return this.getKline('1d', {...klineParams, limit});
   }
 
+  async getKline1HourRecordOfCurrentHour(symbol: string): Promise<Result<PriceKline>> {
+    return Result.fromExecutionAsync(async () => {
+      let result = await this.getKline('1h', {symbol, limit: 1});
+      return result.unwrap()[0];
+    });
+  }
+
+  async getKline1DayRecordOfCurrentDay(symbol: string): Promise<Result<PriceKline>> {
+    return Result.fromExecutionAsync(async () => {
+      let result = await this.getKline('1d', {symbol, limit: 1});
+      return result.unwrap()[0];
+    });
+  }
+
   private async getKline(
     interval: string,
     klineParams: KlineParams,

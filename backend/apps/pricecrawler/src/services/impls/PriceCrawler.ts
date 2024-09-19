@@ -89,6 +89,32 @@ export class PriceCrawler {
     });
   }
 
+  crawlKlineDataOfCurrentHour(): Promise<Result<void>> {
+    return Result.fromExecutionAsync(async () => {
+      for (const symbol of this.priceCrawlerConfig.symbolTrackingList) {
+        let result: Result<any> =
+          await this.binanceRestClient.getKline1HourRecordOfCurrentHour(symbol);
+        result = await result.okThenAsync(async (price) => {
+          (await this.priceRepo.bulkUpsertPriceKline1Hour([price])).unwrap();
+        });
+        result.errThen(this.handleError);
+      }
+    });
+  }
+
+  crawlKlineDataOfCurrentDay(): Promise<Result<void>> {
+    return Result.fromExecutionAsync(async () => {
+      for (const symbol of this.priceCrawlerConfig.symbolTrackingList) {
+        let result: Result<any> =
+          await this.binanceRestClient.getKline1DayRecordOfCurrentDay(symbol);
+        result = await result.okThenAsync(async (price) => {
+          (await this.priceRepo.bulkUpsertPriceKline1Day([price])).unwrap();
+        });
+        result.errThen(this.handleError);
+      }
+    });
+  }
+
   private handleError(err: any): never {
     this.logger.error(err.message || err, err.stack);
     throw err;
