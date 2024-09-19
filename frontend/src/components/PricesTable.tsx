@@ -3,6 +3,8 @@ import cl from 'classnames';
 
 import {PriceKlineSeries, PriceNow} from '../services/PriceDataSource';
 
+const compactNum = Intl.NumberFormat('en-US', {notation: 'compact'});
+
 function makeBinancePathParamOfSymbol(symbol: string): string {
   return symbol.split('USDT')[0] + '_USDT';
 }
@@ -13,7 +15,7 @@ type Props = {
 };
 
 type SymbolDStats = {
-  latest3DaysVol: number;
+  todayQuotVol: number;
   todayOpenPrice: number;
 };
 
@@ -23,11 +25,9 @@ const PricesTable: FC<Props> = ({priceNowList, kline1DSeriesList}) => {
     for (const kline1dSeries of kline1DSeriesList) {
       const symbol = kline1dSeries.symbol;
       const klineData = kline1dSeries.priceKlineData || [];
-      const latest3DaysVol = klineData
-        .slice(klineData.length - 4)
-        .reduce((c, n) => c + n.quotVol, 0);
+      const todayQuotVol = klineData[klineData.length - 1].quotVol;
       const todayOpenPrice = klineData[klineData.length - 1].openPrice;
-      symbolDStats[symbol] = {latest3DaysVol, todayOpenPrice};
+      symbolDStats[symbol] = {todayQuotVol, todayOpenPrice};
     }
     return symbolDStats;
   }, [kline1DSeriesList]);
@@ -35,8 +35,8 @@ const PricesTable: FC<Props> = ({priceNowList, kline1DSeriesList}) => {
   const sortedPriceNowList = useMemo<PriceNow[]>(() => {
     return [...priceNowList].sort((a, b) => {
       return (
-        (mapSymbolDStats[b.symbol]?.latest3DaysVol || 0) -
-        (mapSymbolDStats[a.symbol]?.latest3DaysVol || 0)
+        (mapSymbolDStats[b.symbol]?.todayQuotVol || 0) -
+        (mapSymbolDStats[a.symbol]?.todayQuotVol || 0)
       );
     });
   }, [priceNowList, mapSymbolDStats]);
@@ -53,13 +53,17 @@ const PricesTable: FC<Props> = ({priceNowList, kline1DSeriesList}) => {
               Price
             </th>
             <th scope="col" className="px-6 py-3 overflow-hidden whitespace-nowrap text-ellipsis">
-              Today
+              Change
+            </th>
+            <th scope="col" className="px-6 py-3 overflow-hidden whitespace-nowrap text-ellipsis">
+              Volume
             </th>
           </tr>
         </thead>
         <tbody>
           {sortedPriceNowList.map((p) => {
             const todayOpenPrice = mapSymbolDStats[p.symbol]?.todayOpenPrice || 0;
+            const todayQuotVol = mapSymbolDStats[p.symbol]?.todayQuotVol || 0;
             const todayChange =
               todayOpenPrice > 0
                 ? Math.round(100 * ((100 * (p.price - todayOpenPrice)) / todayOpenPrice)) / 100
@@ -96,6 +100,7 @@ const PricesTable: FC<Props> = ({priceNowList, kline1DSeriesList}) => {
                   {todayChange > 0 ? '+' : ''}
                   {todayChange}%
                 </td>
+                <td className="px-6 py-4">${compactNum.format(todayQuotVol)}</td>
               </tr>
             );
           })}
