@@ -2,7 +2,7 @@
 import {format as sql, escapeId} from 'sqlstring';
 import {RSI} from 'trading-signals';
 
-import {Result} from '../devkit';
+import {Option, Result} from '../devkit';
 import {DatabaseClient} from './DatabaseClient';
 
 export class PriceNow {
@@ -82,17 +82,24 @@ export type PriceKlineSeries = {
 
 export class PriceDataSource {
   private databaseClient: DatabaseClient;
+  private cachedAllSymbols: Option<string[]>;
 
   constructor(opts: any) {
     this.databaseClient = opts.databaseClient;
+    this.cachedAllSymbols = Option.none();
   }
 
   getAllSymbols(): Promise<Result<string[]>> {
     return Result.fromExecutionAsync(async () => {
-      let result = await this.databaseClient.query(
-        sql('SELECT DISTINCT symbol FROM price_now ORDER BY symbol ASC;'),
-      );
-      return result.unwrapOr([]).map((r) => r.symbol || '');
+      if (this.cachedAllSymbols.isNone()) {
+        let result = await this.databaseClient.query(
+          sql('SELECT DISTINCT symbol FROM price_now ORDER BY symbol ASC;'),
+        );
+        result.okThen((rows) => {
+          this.cachedAllSymbols = Option.some(rows.map((r) => r.symbol || ''));
+        });
+      }
+      return this.cachedAllSymbols.unwrapOr([]);
     });
   }
 
