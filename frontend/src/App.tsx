@@ -3,6 +3,7 @@ import {FC, useEffect, useRef} from 'react';
 import {usePriceData} from './hooks/usePriceData';
 import RSIVolChart, {RSIInterval} from './components/RSIVolChart';
 import PricesTable from './components/PricesTable';
+import Footer from './components/Footer';
 
 const App: FC<{}> = () => {
   const {
@@ -35,37 +36,44 @@ const App: FC<{}> = () => {
   }, [reloadPriceKline1HSeriesList, reloadPriceKline1DSeriesList]);
 
   return (
-    <div className="w-full xl:w-11/12 xl:mx-auto pt-16 pb-64">
-      <h1 className="text-3xl text-center font-bold mb-12">Top Coins</h1>
-      <div className="flex flex-col-reverse xl:flex-row flex-wrap">
-        <div className="w-full xl:w-1/4 xl:1/6 mb-12">
-          <h2 className="text-center text-sm text-zinc-600 font-bold">Prices</h2>
-          <div className="w-11/12 mx-auto xl:w-full pt-[10px]">
-            <PricesTable priceNowList={priceNowList} kline1DSeriesList={priceKline1DSeriesList} />
+    <>
+      <div className="w-full xl:w-11/12 xl:mx-auto pt-16 pb-64">
+        <h1 className="text-3xl text-center font-bold mb-12">Top Coins</h1>
+        <div className="flex flex-col-reverse xl:flex-row flex-wrap">
+          <div className="w-full xl:w-1/4 xl:1/6 mb-12">
+            <h2 className="text-center text-sm text-zinc-600 font-bold mb-4">Today Prices</h2>
+            <div className="w-11/12 mx-auto xl:w-full">
+              <PricesTable priceNowList={priceNowList} kline1DSeriesList={priceKline1DSeriesList} />
+            </div>
           </div>
-        </div>
-        <div className="w-full xl:w-3/4 xl:5/6 mb-12">
-          <h2 className="text-center text-sm text-zinc-600 font-bold">RSI 14 & Volumes 1H</h2>
-          <div className="w-full aspect-video mb-12">
-            <RSIVolChart
-              interval={RSIInterval._1Hour}
-              allSymbols={allSymbols}
-              klineSeriesList={priceKline1HSeriesList}
-              priceNowList={priceNowList}
-            />
-          </div>
-          <h2 className="text-center text-sm text-zinc-600 font-bold">RSI 14 & Volumes 1D</h2>
-          <div className="w-full aspect-video">
-            <RSIVolChart
-              interval={RSIInterval._1Day}
-              allSymbols={allSymbols}
-              klineSeriesList={priceKline1DSeriesList}
-              priceNowList={priceNowList}
-            />
+          <div className="w-full xl:w-3/4 xl:5/6 mb-12">
+            <h2 className="text-center text-sm text-zinc-600 font-bold mb-4">
+              RSI 14 & Volumes 1H
+            </h2>
+            <div className="w-full aspect-video mb-12">
+              <RSIVolChart
+                interval={RSIInterval._1Hour}
+                allSymbols={allSymbols}
+                klineSeriesList={priceKline1HSeriesList}
+                priceNowList={priceNowList}
+              />
+            </div>
+            <h2 className="text-center text-sm text-zinc-600 font-bold mb-4">
+              RSI 14 & Volumes 1D
+            </h2>
+            <div className="w-full aspect-video">
+              <RSIVolChart
+                interval={RSIInterval._1Day}
+                allSymbols={allSymbols}
+                klineSeriesList={priceKline1DSeriesList}
+                priceNowList={priceNowList}
+              />
+            </div>
           </div>
         </div>
       </div>
-    </div>
+      <Footer />
+    </>
   );
 };
 

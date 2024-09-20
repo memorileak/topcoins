@@ -176,10 +176,10 @@ const RSIVolChart: FC<Props> = ({interval, allSymbols, klineSeriesList, priceNow
         <LineChart
           data={lineChartData}
           margin={{
-            top: 10,
+            top: 0,
             right: 60,
             left: 10,
-            bottom: 10,
+            bottom: 0,
           }}
         >
           <CartesianGrid horizontal={false} vertical={false} />
