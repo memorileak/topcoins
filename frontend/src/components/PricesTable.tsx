@@ -49,7 +49,10 @@ const PricesTable: FC<Props> = ({priceNowList, kline1DSeriesList}) => {
             <th scope="col" className="px-6 py-3 overflow-hidden whitespace-nowrap text-ellipsis">
               Symbol
             </th>
-            <th scope="col" className="px-6 py-3 overflow-hidden whitespace-nowrap text-ellipsis">
+            <th
+              scope="col"
+              className="w-1/3 px-6 py-3 overflow-hidden whitespace-nowrap text-ellipsis"
+            >
               Price
             </th>
             <th scope="col" className="px-6 py-3 overflow-hidden whitespace-nowrap text-ellipsis">
@@ -70,7 +73,10 @@ const PricesTable: FC<Props> = ({priceNowList, kline1DSeriesList}) => {
                 : 0;
             return (
               <tr key={p.symbol} className="bg-white border-b">
-                <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+                <th
+                  scope="row"
+                  className="px-6 py-4 font-medium text-gray-900 overflow-hidden whitespace-nowrap text-ellipsis"
+                >
                   <a
                     href={`https://www.binance.com/trade/${makeBinancePathParamOfSymbol(p.symbol)}?type=spot`}
                     target="_blank"
@@ -80,7 +86,7 @@ const PricesTable: FC<Props> = ({priceNowList, kline1DSeriesList}) => {
                   </a>
                 </th>
                 <td
-                  className={cl('px-6 py-4', {
+                  className={cl('px-6 py-4 overflow-hidden whitespace-nowrap text-ellipsis', {
                     'text-green-600': p.price > todayOpenPrice,
                     'text-red-600': p.price < todayOpenPrice,
                   })}
@@ -92,7 +98,7 @@ const PricesTable: FC<Props> = ({priceNowList, kline1DSeriesList}) => {
                   })}
                 </td>
                 <td
-                  className={cl('px-6 py-4', {
+                  className={cl('px-6 py-4 overflow-hidden whitespace-nowrap text-ellipsis', {
                     'text-green-600': todayChange > 0,
                     'text-red-600': todayChange < 0,
                   })}
@@ -100,7 +106,9 @@ const PricesTable: FC<Props> = ({priceNowList, kline1DSeriesList}) => {
                   {todayChange > 0 ? '+' : ''}
                   {todayChange}%
                 </td>
-                <td className="px-6 py-4">${compactNum.format(todayQuotVol)}</td>
+                <td className="px-6 py-4 overflow-hidden whitespace-nowrap text-ellipsis">
+                  ${compactNum.format(todayQuotVol)}
+                </td>
               </tr>
             );
           })}
