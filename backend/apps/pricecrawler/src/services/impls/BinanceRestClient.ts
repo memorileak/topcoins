@@ -19,15 +19,21 @@ export class BinanceRestClient {
   ) {}
 
   async getCurrentPriceOfSymbols(symbols: string[]): Promise<Result<PriceNow[]>> {
+    const batchSize = 25;
     const result = await Result.fromExecutionAsync(async () => {
-      // TODO: may need to handle symbols in batch of 25
-      const res = await firstValueFrom(
-        this.httpService.get(
-          `${this.priceCrawlerConfig.binanceRestApiEndpoint}/api/v3/ticker/price`,
-          {params: {symbols: JSON.stringify(symbols)}},
-        ),
-      );
-      return (res.data || []).map((p: any) => PriceNow.newFromBinance(p));
+      let allPrices: PriceNow[] = [];
+      for (let i = 0; i < symbols.length; i += batchSize) {
+        const batchSymbols = symbols.slice(i, i + batchSize);
+        const res = await firstValueFrom(
+          this.httpService.get(
+            `${this.priceCrawlerConfig.binanceRestApiEndpoint}/api/v3/ticker/price`,
+            {params: {symbols: JSON.stringify(batchSymbols)}},
+          ),
+        );
+        const batchPrices = (res.data || []).map((p: any) => PriceNow.newFromBinance(p));
+        allPrices = allPrices.concat(batchPrices);
+      }
+      return allPrices;
     });
     return result.errThen((err) => this.handleAxiosError(err));
   }
