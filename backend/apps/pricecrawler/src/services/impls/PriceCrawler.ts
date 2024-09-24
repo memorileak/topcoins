@@ -17,6 +17,21 @@ export class PriceCrawler {
     this.handleError = this.handleError.bind(this);
   }
 
+  initiallyCrawlKline15Minutes(): Promise<Result<void>> {
+    return Result.fromExecutionAsync(async () => {
+      for (const symbol of this.priceCrawlerConfig.symbolTrackingList) {
+        let result: Result<any> = await this.binanceRestClient.getKline15MinutesInterval({
+          symbol,
+          limit: 420,
+        });
+        result = await result.okThenAsync(async (prices) => {
+          (await this.priceRepo.bulkUpsertPriceKline15Minutes(prices)).unwrap();
+        });
+        result.errThen(this.handleError);
+      }
+    });
+  }
+
   initiallyCrawlKline1Hour(): Promise<Result<void>> {
     return Result.fromExecutionAsync(async () => {
       for (const symbol of this.priceCrawlerConfig.symbolTrackingList) {
@@ -41,6 +56,21 @@ export class PriceCrawler {
         });
         result = await result.okThenAsync(async (prices) => {
           (await this.priceRepo.bulkUpsertPriceKline1Day(prices)).unwrap();
+        });
+        result.errThen(this.handleError);
+      }
+    });
+  }
+
+  crawlLatestDataOfKline15Minutes(): Promise<Result<void>> {
+    return Result.fromExecutionAsync(async () => {
+      for (const symbol of this.priceCrawlerConfig.symbolTrackingList) {
+        let result: Result<any> = await this.binanceRestClient.getKline15MinutesInterval({
+          symbol,
+          limit: 6,
+        });
+        result = await result.okThenAsync(async (prices) => {
+          (await this.priceRepo.bulkUpsertPriceKline15Minutes(prices)).unwrap();
         });
         result.errThen(this.handleError);
       }
@@ -86,6 +116,19 @@ export class PriceCrawler {
         (await this.priceRepo.bulkUpsertPriceNow(prices)).unwrap();
       });
       result.errThen(this.handleError);
+    });
+  }
+
+  crawlKlineDataOfCurrent15Minutes(): Promise<Result<void>> {
+    return Result.fromExecutionAsync(async () => {
+      for (const symbol of this.priceCrawlerConfig.symbolTrackingList) {
+        let result: Result<any> =
+          await this.binanceRestClient.getKline15MinutesRecordOfCurrent15Minutes(symbol);
+        result = await result.okThenAsync(async (price) => {
+          (await this.priceRepo.bulkUpsertPriceKline15Minutes([price])).unwrap();
+        });
+        result.errThen(this.handleError);
+      }
     });
   }
 

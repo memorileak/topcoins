@@ -11,7 +11,9 @@ export class PriceRepo {
 
   private initializedWithoutErrors = true;
 
-  constructor(private readonly sqliteDatabase: SqliteDatabase) {}
+  constructor(private readonly sqliteDatabase: SqliteDatabase) {
+    this.handleInitializationError = this.handleInitializationError.bind(this);
+  }
 
   async initialize(): Promise<Result<void>> {
     return new Promise((resolve) => {
@@ -24,7 +26,7 @@ export class PriceRepo {
             time INTEGER NOT NULL,
             price REAL NOT NULL
           );`.replace(/\s+/g, ' '),
-          priceRepo.handleInitializationError.bind(priceRepo),
+          priceRepo.handleInitializationError,
         );
 
         db.run(
@@ -42,19 +44,19 @@ export class PriceRepo {
             low_price REAL NOT NULL,
             close_price REAL NOT NULL
           );`.replace(/\s+/g, ' '),
-          priceRepo.handleInitializationError.bind(priceRepo),
+          priceRepo.handleInitializationError,
         );
         db.run(
           `CREATE UNIQUE INDEX IF NOT EXISTS uniq_pricekline1h_symbol_opentime ON price_kline_1h (symbol, open_time);`,
-          priceRepo.handleInitializationError.bind(priceRepo),
+          priceRepo.handleInitializationError,
         );
         db.run(
           `CREATE INDEX IF NOT EXISTS idx_pricekline1h_symbol ON price_kline_1h (symbol);`,
-          priceRepo.handleInitializationError.bind(priceRepo),
+          priceRepo.handleInitializationError,
         );
         db.run(
           `CREATE INDEX IF NOT EXISTS idx_pricekline1h_opentime ON price_kline_1h (open_time);`,
-          priceRepo.handleInitializationError.bind(priceRepo),
+          priceRepo.handleInitializationError,
         );
 
         db.run(
@@ -72,19 +74,19 @@ export class PriceRepo {
             low_price REAL NOT NULL,
             close_price REAL NOT NULL
           );`.replace(/\s+/g, ' '),
-          priceRepo.handleInitializationError.bind(priceRepo),
+          priceRepo.handleInitializationError,
         );
         db.run(
           `CREATE UNIQUE INDEX IF NOT EXISTS uniq_pricekline1d_symbol_opentime ON price_kline_1d (symbol, open_time);`,
-          priceRepo.handleInitializationError.bind(priceRepo),
+          priceRepo.handleInitializationError,
         );
         db.run(
           `CREATE INDEX IF NOT EXISTS idx_pricekline1d_symbol ON price_kline_1d (symbol);`,
-          priceRepo.handleInitializationError.bind(priceRepo),
+          priceRepo.handleInitializationError,
         );
         db.run(
           `CREATE INDEX IF NOT EXISTS idx_pricekline1d_opentime ON price_kline_1d (open_time);`,
-          priceRepo.handleInitializationError.bind(priceRepo),
+          priceRepo.handleInitializationError,
         );
 
         db.run(
@@ -102,15 +104,15 @@ export class PriceRepo {
             low_price REAL NOT NULL,
             close_price REAL NOT NULL
           );`.replace(/\s+/g, ' '),
-          priceRepo.handleInitializationError.bind(priceRepo),
+          priceRepo.handleInitializationError,
         );
         db.run(
           `CREATE UNIQUE INDEX IF NOT EXISTS uniq_pricekline15m_symbol_opentime ON price_kline_15m (symbol, open_time);`,
-          priceRepo.handleInitializationError.bind(priceRepo),
+          priceRepo.handleInitializationError,
         );
         db.run(
           `CREATE INDEX IF NOT EXISTS idx_pricekline15m_symbol ON price_kline_15m (symbol);`,
-          priceRepo.handleInitializationError.bind(priceRepo),
+          priceRepo.handleInitializationError,
         );
         db.run(
           `CREATE INDEX IF NOT EXISTS idx_pricekline15m_opentime ON price_kline_15m (open_time);`,
@@ -126,6 +128,13 @@ export class PriceRepo {
         );
       });
     });
+  }
+
+  private handleInitializationError(err: any): void {
+    if (err) {
+      this.initializedWithoutErrors = false;
+      this.logger.error(err.message || err, err.stack);
+    }
   }
 
   bulkUpsertPriceNow(symbolPrices: PriceNow[]): Promise<Result<void>> {
@@ -152,6 +161,10 @@ export class PriceRepo {
         }
       }
     });
+  }
+
+  bulkUpsertPriceKline15Minutes(klinePrices: PriceKline[]): Promise<Result<void>> {
+    return this.bulkUpsertPriceKline('price_kline_15m', klinePrices);
   }
 
   bulkUpsertPriceKline1Hour(klinePrices: PriceKline[]): Promise<Result<void>> {
@@ -227,13 +240,6 @@ export class PriceRepo {
         }
       }
     });
-  }
-
-  private handleInitializationError(err: any): void {
-    if (err) {
-      this.initializedWithoutErrors = false;
-      this.logger.error(err.message || err, err.stack);
-    }
   }
 
   private promisifyQueryExecution<T = void>(

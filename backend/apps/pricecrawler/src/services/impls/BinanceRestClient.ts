@@ -38,14 +38,26 @@ export class BinanceRestClient {
     return result.errThen((err) => this.handleAxiosError(err));
   }
 
+  async getKline15MinutesInterval(klineParams: KlineParams): Promise<Result<PriceKline[]>> {
+    const limit = klineParams.limit || 420;
+    return this.getKline('15m', {...klineParams, limit});
+  }
+
   async getKline1HourInterval(klineParams: KlineParams): Promise<Result<PriceKline[]>> {
-    const limit = klineParams.limit || 240;
+    const limit = klineParams.limit || 420;
     return this.getKline('1h', {...klineParams, limit});
   }
 
   async getKline1DayInterval(klineParams: KlineParams): Promise<Result<PriceKline[]>> {
-    const limit = klineParams.limit || 120;
+    const limit = klineParams.limit || 420;
     return this.getKline('1d', {...klineParams, limit});
+  }
+
+  async getKline15MinutesRecordOfCurrent15Minutes(symbol: string): Promise<Result<PriceKline>> {
+    return Result.fromExecutionAsync(async () => {
+      let result = await this.getKline('15m', {symbol, limit: 1});
+      return result.unwrap()[0];
+    });
   }
 
   async getKline1HourRecordOfCurrentHour(symbol: string): Promise<Result<PriceKline>> {

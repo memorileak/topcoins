@@ -19,17 +19,31 @@ export class Crontab {
   }
 
   // Runs at 10 seconds past every even-numbered minute (0, 2, 4, ..., 58)
-  @Cron('10 0-58/2 * * * *')
+  @Cron('10 0-57/3 * * * *')
+  async runCrawlingKline15MinutesOfCurrent15Minutes(): Promise<void> {
+    this.logger.debug('Running method: runCrawlingKline15MinutesOfCurrent15Minutes');
+    (await this.priceCrawler.crawlKlineDataOfCurrent15Minutes()).errThen(this.showError);
+  }
+
+  // Runs at 10 seconds past every even-numbered minute (0, 2, 4, ..., 58)
+  @Cron('10 1-58/3 * * * *')
   async runCrawlingKline1HourOfCurrentHour(): Promise<void> {
     this.logger.debug('Running method: runCrawlingKline1HourOfCurrentHour');
     (await this.priceCrawler.crawlKlineDataOfCurrentHour()).errThen(this.showError);
   }
 
   // Runs at 10 seconds past every odd-numbered minute (1, 3, 5, ..., 59)
-  @Cron('10 1-59/2 * * * *')
+  @Cron('10 2-59/3 * * * *')
   async runCrawlingKline1DayOfCurrentDay(): Promise<void> {
     this.logger.debug('Running method: runCrawlingKline1DayOfCurrentDay');
     (await this.priceCrawler.crawlKlineDataOfCurrentDay()).errThen(this.showError);
+  }
+
+  // Runs at the start of every hour (1 minute past the hour)
+  @Cron('5 0-45/15 * * * *')
+  async runKline15MinutesCrawling(): Promise<void> {
+    this.logger.debug('Running method: runKline15MinutesCrawling');
+    (await this.priceCrawler.crawlLatestDataOfKline15Minutes()).errThen(this.showError);
   }
 
   // Runs at the start of every hour (1 minute past the hour)
