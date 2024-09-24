@@ -11,8 +11,8 @@ export class Crontab {
     this.showError = this.showError.bind(this);
   }
 
-  // Runs every 30 seconds
-  @Cron('*/30 * * * * *')
+  // Runs every 15 seconds
+  @Cron('*/15 * * * * *')
   async runPriceNowCrawling(): Promise<void> {
     this.logger.debug('Running method: runPriceNowCrawling');
     (await this.priceCrawler.crawlLatestDataOfPriceNow()).errThen(this.showError);
