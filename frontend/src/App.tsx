@@ -86,16 +86,17 @@ const App: FC<{}> = () => {
       <div className="w-full xl:w-11/12 xl:mx-auto pt-16 pb-64">
         <h1 className="text-3xl text-center font-bold mb-12">Top Coins</h1>
         <div className="flex flex-col-reverse xl:flex-row flex-wrap">
-          <div className="w-full xl:w-1/4 xl:1/6 mb-12">
+          <div className="w-full xl:w-2/5 mb-12">
             <h2 className="text-center text-sm text-zinc-600 font-bold mb-4">Today Prices</h2>
             <div className="w-11/12 mx-auto xl:w-full">
               <PricesTable
                 allSymbols={allSymbols}
+                kline15mSeriesList={priceKline15mSeriesListUpToDate}
                 kline1DSeriesList={priceKline1DSeriesListUpToDate}
               />
             </div>
           </div>
-          <div className="w-full xl:w-3/4 xl:5/6 mb-12">
+          <div className="w-full xl:w-3/5 mb-12">
             <h2 className="text-center text-sm text-zinc-600 font-bold mb-4">
               RSI 14 & Volumes 15m
             </h2>

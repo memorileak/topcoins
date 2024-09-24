@@ -1,4 +1,4 @@
-import {FC, useMemo} from 'react';
+import {FC, useEffect, useMemo, useState} from 'react';
 import cl from 'classnames';
 
 import {PriceKlineSeries} from '../services/PriceDataSource';
@@ -9,36 +9,83 @@ function makeBinancePathParamOfSymbol(symbol: string): string {
   return symbol.split('USDT')[0] + '_USDT';
 }
 
+function r(n: number): number {
+  return Math.round(100 * n) / 100;
+}
+
 type Props = {
   allSymbols: string[];
+  kline15mSeriesList: PriceKlineSeries[];
   kline1DSeriesList: PriceKlineSeries[];
 };
 
-type SymbolDStats = {
+type Symbol1DStats = {
   todayQuotVol: number;
   todayOpenPrice: number;
   todayLatestPrice: number;
 };
 
-const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList}) => {
-  const mapSymbolDStats = useMemo<Record<string, SymbolDStats>>(() => {
-    const symbolDStats: Record<string, SymbolDStats> = {};
+type Symbol15mStats = {
+  latestRSI14Value: number;
+  latestVelocs: number[];
+};
+
+const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList, kline15mSeriesList}) => {
+  const mapSymbol1DStats = useMemo<Record<string, Symbol1DStats>>(() => {
+    const symbol1DStats: Record<string, Symbol1DStats> = {};
     for (const kline1dSeries of kline1DSeriesList) {
       const symbol = kline1dSeries.symbol;
       const klineData = kline1dSeries.priceKlineData || [];
       const todayQuotVol = klineData[klineData.length - 1].quotVol;
       const todayOpenPrice = klineData[klineData.length - 1].openPrice;
       const todayLatestPrice = klineData[klineData.length - 1].closePrice;
-      symbolDStats[symbol] = {todayQuotVol, todayOpenPrice, todayLatestPrice};
+      symbol1DStats[symbol] = {todayQuotVol, todayOpenPrice, todayLatestPrice};
     }
-    return symbolDStats;
+    return symbol1DStats;
   }, [kline1DSeriesList]);
+
+  const [mapSymbol15mStats, setMapSymbol15mStats] = useState<Record<string, Symbol15mStats>>({});
+  useEffect(() => {
+    setMapSymbol15mStats((oldMap) => {
+      const newMap = {...oldMap};
+      const MAX_LEN_LATEST_VELOCS = 100;
+
+      for (const kline15mSeries of kline15mSeriesList) {
+        const symbol = kline15mSeries.symbol;
+        const klineData = kline15mSeries.priceKlineData || [];
+
+        if ((newMap[symbol]?.latestVelocs || []).length > 0) {
+          const latestVelocs = newMap[symbol].latestVelocs;
+          const prevRSI14Value = newMap[symbol].latestRSI14Value;
+          const latestRSI14Value = klineData[klineData.length - 1]?.rsi14 || 0;
+          latestVelocs.unshift(r(latestRSI14Value - prevRSI14Value));
+          newMap[symbol].latestVelocs = latestVelocs.slice(0, MAX_LEN_LATEST_VELOCS);
+        } else {
+          let latestRSI14Value: number | null = null;
+          const latestVelocs = [];
+          for (const pk of klineData) {
+            latestVelocs.unshift(r(latestRSI14Value ? pk.rsi14 - latestRSI14Value : 0));
+            latestRSI14Value = pk.rsi14;
+          }
+          newMap[symbol] = {
+            latestRSI14Value: latestRSI14Value || 0,
+            latestVelocs: latestVelocs.slice(0, MAX_LEN_LATEST_VELOCS),
+          };
+        }
+      }
+
+      return newMap;
+    });
+  }, [kline15mSeriesList]);
 
   const sortedSymbols = useMemo<string[]>(() => {
     return [...allSymbols].sort((a, b) => {
-      return (mapSymbolDStats[b]?.todayQuotVol || 0) - (mapSymbolDStats[a]?.todayQuotVol || 0);
+      return (
+        (mapSymbol15mStats[b]?.latestVelocs?.[0] || 0) -
+        (mapSymbol15mStats[a]?.latestVelocs?.[0] || 0)
+      );
     });
-  }, [allSymbols, mapSymbolDStats]);
+  }, [allSymbols, mapSymbol15mStats]);
 
   return (
     <div className="relative overflow-x-auto">
@@ -50,7 +97,7 @@ const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList}) => {
             </th>
             <th
               scope="col"
-              className="w-1/3 px-6 py-3 overflow-hidden whitespace-nowrap text-ellipsis"
+              className="w-1/5 px-6 py-3 overflow-hidden whitespace-nowrap text-ellipsis"
             >
               Price
             </th>
@@ -60,18 +107,25 @@ const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList}) => {
             <th scope="col" className="px-6 py-3 overflow-hidden whitespace-nowrap text-ellipsis">
               Volume
             </th>
+            <th
+              scope="col"
+              className="w-1/3 px-6 py-3 overflow-hidden whitespace-nowrap text-ellipsis"
+            >
+              Velocs
+            </th>
           </tr>
         </thead>
         <tbody>
           {sortedSymbols.map((s) => {
-            const todayQuotVol = mapSymbolDStats[s]?.todayQuotVol || 0;
-            const todayOpenPrice = mapSymbolDStats[s]?.todayOpenPrice || 0;
-            const todayLatestPrice = mapSymbolDStats[s]?.todayLatestPrice || 0;
+            const todayQuotVol = mapSymbol1DStats[s]?.todayQuotVol || 0;
+            const todayOpenPrice = mapSymbol1DStats[s]?.todayOpenPrice || 0;
+            const todayLatestPrice = mapSymbol1DStats[s]?.todayLatestPrice || 0;
             const todayChange =
               todayOpenPrice > 0
                 ? Math.round(100 * ((100 * (todayLatestPrice - todayOpenPrice)) / todayOpenPrice)) /
                   100
                 : 0;
+            const latestVelocs = (mapSymbol15mStats[s]?.latestVelocs || []).slice(0, 6);
             return (
               <tr key={s} className="bg-white border-b">
                 <th
@@ -109,6 +163,20 @@ const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList}) => {
                 </td>
                 <td className="px-6 py-4 overflow-hidden whitespace-nowrap text-ellipsis">
                   ${compactNum.format(todayQuotVol)}
+                </td>
+                <td className="px-6 py-4 overflow-hidden whitespace-nowrap text-ellipsis">
+                  <div className="w-full flex flex-wrap items-center">
+                    {latestVelocs.map((v) => (
+                      <span
+                        className={cl('mr-2', {
+                          'text-green-600': v > 0,
+                          'text-red-600': v < 0,
+                        })}
+                      >
+                        {v}
+                      </span>
+                    ))}
+                  </div>
                 </td>
               </tr>
             );
