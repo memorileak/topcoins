@@ -13,8 +13,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 
-import {PriceKlineSeries, PriceNow} from '../services/PriceDataSource';
-import {Result} from '../devkit';
+import {PriceKlineSeries} from '../services/PriceDataSource';
 
 export enum RSIInterval {
   _15Minutes = '15m',
@@ -84,32 +83,15 @@ type Props = {
   interval: RSIInterval;
   allSymbols: string[];
   klineSeriesList: PriceKlineSeries[];
-  priceNowList: PriceNow[];
 };
 
-const RSIVolChart: FC<Props> = ({interval, allSymbols, klineSeriesList, priceNowList}) => {
+const RSIVolChart: FC<Props> = ({interval, allSymbols, klineSeriesList}) => {
   const lineChartData = useMemo(() => {
     const chartData: Record<string, any>[] = [];
     const mapTimeRecord: Map<number, Record<string, any>> = new Map();
-    const mapSymbolPriceNow: Record<string, PriceNow> = {};
-
-    for (const p of priceNowList) {
-      mapSymbolPriceNow[p.symbol] = p;
-    }
 
     for (const klineSeries of klineSeriesList) {
       const priceKlineData = klineSeries.priceKlineData || [];
-      const latestKline = priceKlineData[priceKlineData.length - 1];
-
-      if (latestKline) {
-        latestKline.closePrice =
-          mapSymbolPriceNow[klineSeries.symbol]?.price ?? latestKline.closePrice;
-        klineSeries.rsi14Indexer.replace(latestKline.closePrice);
-        latestKline.rsi14 = Result.fromExecution(() =>
-          parseFloat(klineSeries.rsi14Indexer.getResult().toFixed(2)),
-        ).unwrapOr(0);
-      }
-
       for (const priceKline of priceKlineData) {
         if (!mapTimeRecord.has(priceKline.closeTime)) {
           mapTimeRecord.set(priceKline.closeTime, {});
@@ -138,7 +120,7 @@ const RSIVolChart: FC<Props> = ({interval, allSymbols, klineSeriesList, priceNow
     chartData.sort((a, b) => a.closeTime - b.closeTime);
 
     return chartData.slice(2 * 14);
-  }, [interval, klineSeriesList, priceNowList]);
+  }, [interval, klineSeriesList]);
 
   const colorScale = useMemo(
     () =>

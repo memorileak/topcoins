@@ -1,9 +1,37 @@
-import {FC, useEffect, useRef} from 'react';
+import {FC, useEffect, useMemo, useRef} from 'react';
 
+import {Result} from './devkit';
+import {PriceKlineSeries, PriceNow} from './services/PriceDataSource';
 import {usePriceData} from './hooks/usePriceData';
 import RSIVolChart, {RSIInterval} from './components/RSIVolChart';
 import PricesTable from './components/PricesTable';
 import Footer from './components/Footer';
+
+function updateKlineSeriesListWithPriceNowList(
+  klineSeriesList: PriceKlineSeries[],
+  priceNowList: PriceNow[],
+) {
+  const mapSymbolPriceNow: Record<string, PriceNow> = {};
+
+  for (const p of priceNowList) {
+    mapSymbolPriceNow[p.symbol] = p;
+  }
+
+  for (const klineSeries of klineSeriesList) {
+    const priceKlineData = klineSeries.priceKlineData || [];
+    const latestKline = priceKlineData[priceKlineData.length - 1];
+    if (latestKline) {
+      latestKline.closePrice =
+        mapSymbolPriceNow[klineSeries.symbol]?.price ?? latestKline.closePrice;
+      klineSeries.rsi14Indexer.replace(latestKline.closePrice);
+      latestKline.rsi14 = Result.fromExecution(() =>
+        parseFloat(klineSeries.rsi14Indexer.getResult().toFixed(2)),
+      ).unwrapOr(0);
+    }
+  }
+
+  return klineSeriesList;
+}
 
 const App: FC<{}> = () => {
   const {
@@ -38,6 +66,21 @@ const App: FC<{}> = () => {
     }, 60 * 1000);
   }, [reloadPriceKline15mSeriesList, reloadPriceKline1HSeriesList, reloadPriceKline1DSeriesList]);
 
+  const priceKline15mSeriesListUpToDate = useMemo(
+    () => updateKlineSeriesListWithPriceNowList(priceKline15mSeriesList, priceNowList),
+    [priceKline15mSeriesList, priceNowList],
+  );
+
+  const priceKline1HSeriesListUpToDate = useMemo(
+    () => updateKlineSeriesListWithPriceNowList(priceKline1HSeriesList, priceNowList),
+    [priceKline1HSeriesList, priceNowList],
+  );
+
+  const priceKline1DSeriesListUpToDate = useMemo(
+    () => updateKlineSeriesListWithPriceNowList(priceKline1DSeriesList, priceNowList),
+    [priceKline1DSeriesList, priceNowList],
+  );
+
   return (
     <>
       <div className="w-full xl:w-11/12 xl:mx-auto pt-16 pb-64">
@@ -46,7 +89,10 @@ const App: FC<{}> = () => {
           <div className="w-full xl:w-1/4 xl:1/6 mb-12">
             <h2 className="text-center text-sm text-zinc-600 font-bold mb-4">Today Prices</h2>
             <div className="w-11/12 mx-auto xl:w-full">
-              <PricesTable priceNowList={priceNowList} kline1DSeriesList={priceKline1DSeriesList} />
+              <PricesTable
+                allSymbols={allSymbols}
+                kline1DSeriesList={priceKline1DSeriesListUpToDate}
+              />
             </div>
           </div>
           <div className="w-full xl:w-3/4 xl:5/6 mb-12">
@@ -57,8 +103,7 @@ const App: FC<{}> = () => {
               <RSIVolChart
                 interval={RSIInterval._15Minutes}
                 allSymbols={allSymbols}
-                klineSeriesList={priceKline15mSeriesList}
-                priceNowList={priceNowList}
+                klineSeriesList={priceKline15mSeriesListUpToDate}
               />
             </div>
             <h2 className="text-center text-sm text-zinc-600 font-bold mb-4">
@@ -68,8 +113,7 @@ const App: FC<{}> = () => {
               <RSIVolChart
                 interval={RSIInterval._1Hour}
                 allSymbols={allSymbols}
-                klineSeriesList={priceKline1HSeriesList}
-                priceNowList={priceNowList}
+                klineSeriesList={priceKline1HSeriesListUpToDate}
               />
             </div>
             <h2 className="text-center text-sm text-zinc-600 font-bold mb-4">
@@ -79,8 +123,7 @@ const App: FC<{}> = () => {
               <RSIVolChart
                 interval={RSIInterval._1Day}
                 allSymbols={allSymbols}
-                klineSeriesList={priceKline1DSeriesList}
-                priceNowList={priceNowList}
+                klineSeriesList={priceKline1DSeriesListUpToDate}
               />
             </div>
           </div>
