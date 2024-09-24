@@ -84,6 +84,36 @@ export class PriceRepo {
         );
         db.run(
           `CREATE INDEX IF NOT EXISTS idx_pricekline1d_opentime ON price_kline_1d (open_time);`,
+          priceRepo.handleInitializationError.bind(priceRepo),
+        );
+
+        db.run(
+          `CREATE TABLE IF NOT EXISTS price_kline_15m (
+            symbol TEXT NOT NULL,
+            open_time INTEGER NOT NULL,
+            close_time INTEGER NOT NULL,
+            base_vol REAL NOT NULL,
+            quot_vol REAL NOT NULL,
+            trades INTEGER NOT NULL,
+            taker_buy_base_vol REAL NOT NULL,
+            taker_buy_quot_vol REAL NOT NULL,
+            open_price REAL NOT NULL,
+            high_price REAL NOT NULL,
+            low_price REAL NOT NULL,
+            close_price REAL NOT NULL
+          );`.replace(/\s+/g, ' '),
+          priceRepo.handleInitializationError.bind(priceRepo),
+        );
+        db.run(
+          `CREATE UNIQUE INDEX IF NOT EXISTS uniq_pricekline15m_symbol_opentime ON price_kline_15m (symbol, open_time);`,
+          priceRepo.handleInitializationError.bind(priceRepo),
+        );
+        db.run(
+          `CREATE INDEX IF NOT EXISTS idx_pricekline15m_symbol ON price_kline_15m (symbol);`,
+          priceRepo.handleInitializationError.bind(priceRepo),
+        );
+        db.run(
+          `CREATE INDEX IF NOT EXISTS idx_pricekline15m_opentime ON price_kline_15m (open_time);`,
           function (err) {
             priceRepo.handleInitializationError(err);
             if (priceRepo.initializedWithoutErrors) {
