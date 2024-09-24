@@ -6,10 +6,12 @@ import {PriceDataSource, PriceKlineSeries, PriceNow} from '../services/PriceData
 type PriceData = {
   allSymbols: string[];
   priceNowList: PriceNow[];
+  priceKline15mSeriesList: PriceKlineSeries[];
   priceKline1HSeriesList: PriceKlineSeries[];
   priceKline1DSeriesList: PriceKlineSeries[];
   reloadAllSymbols: () => void;
   reloadPriceNowList: () => void;
+  reloadPriceKline15mSeriesList: () => void;
   reloadPriceKline1HSeriesList: () => void;
   reloadPriceKline1DSeriesList: () => void;
 };
@@ -22,6 +24,9 @@ export function usePriceData(): PriceData {
 
   const [priceNowList, setPriceNowList] = useState<PriceNow[]>([]);
   const [reloadPriceNowToken, setReloadPriceNowToken] = useState<Symbol>(Symbol());
+
+  const [priceKline15mSeriesList, setPriceKline15mSeriesList] = useState<PriceKlineSeries[]>([]);
+  const [reloadPriceKline15mToken, setReloadPriceKline15mToken] = useState<Symbol>(Symbol());
 
   const [priceKline1HSeriesList, setPriceKline1HSeriesList] = useState<PriceKlineSeries[]>([]);
   const [reloadPriceKline1HToken, setReloadPriceKline1HToken] = useState<Symbol>(Symbol());
@@ -57,6 +62,20 @@ export function usePriceData(): PriceData {
     (async () => {
       const allSymbols = (await priceDataSource.getAllSymbols()).unwrap();
       const klineSeriesList = (
+        await priceDataSource.getKline15MinutesIntervalOfSymbols(allSymbols)
+      ).unwrap();
+      return klineSeriesList;
+    })().then(setPriceKline15mSeriesList);
+  }, [priceDataSource, reloadPriceKline15mToken]);
+
+  const reloadPriceKline15mSeriesList = useCallback(() => {
+    setReloadPriceKline15mToken(Symbol());
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      const allSymbols = (await priceDataSource.getAllSymbols()).unwrap();
+      const klineSeriesList = (
         await priceDataSource.getKline1HourIntervalOfSymbols(allSymbols)
       ).unwrap();
       return klineSeriesList;
@@ -84,10 +103,12 @@ export function usePriceData(): PriceData {
   return {
     allSymbols,
     priceNowList,
+    priceKline15mSeriesList,
     priceKline1HSeriesList,
     priceKline1DSeriesList,
     reloadAllSymbols,
     reloadPriceNowList,
+    reloadPriceKline15mSeriesList,
     reloadPriceKline1HSeriesList,
     reloadPriceKline1DSeriesList,
   };

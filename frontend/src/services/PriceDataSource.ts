@@ -110,6 +110,13 @@ export class PriceDataSource {
     });
   }
 
+  getKline15MinutesIntervalOfSymbols(
+    symbols: string[],
+    limit?: number,
+  ): Promise<Result<PriceKlineSeries[]>> {
+    return this.getKlineDataOfSymbols('price_kline_15m', symbols, limit);
+  }
+
   getKline1HourIntervalOfSymbols(
     symbols: string[],
     limit?: number,

@@ -9,9 +9,11 @@ const App: FC<{}> = () => {
   const {
     allSymbols,
     priceNowList,
+    priceKline15mSeriesList,
     priceKline1HSeriesList,
     priceKline1DSeriesList,
     reloadPriceNowList,
+    reloadPriceKline15mSeriesList,
     reloadPriceKline1HSeriesList,
     reloadPriceKline1DSeriesList,
   } = usePriceData();
@@ -30,10 +32,11 @@ const App: FC<{}> = () => {
   useEffect(() => {
     clearInterval(reloadPriceKlineInterval.current);
     reloadPriceKlineInterval.current = setInterval(() => {
+      reloadPriceKline15mSeriesList();
       reloadPriceKline1HSeriesList();
       reloadPriceKline1DSeriesList();
     }, 60 * 1000);
-  }, [reloadPriceKline1HSeriesList, reloadPriceKline1DSeriesList]);
+  }, [reloadPriceKline15mSeriesList, reloadPriceKline1HSeriesList, reloadPriceKline1DSeriesList]);
 
   return (
     <>
@@ -47,6 +50,17 @@ const App: FC<{}> = () => {
             </div>
           </div>
           <div className="w-full xl:w-3/4 xl:5/6 mb-12">
+            <h2 className="text-center text-sm text-zinc-600 font-bold mb-4">
+              RSI 14 & Volumes 15m
+            </h2>
+            <div className="w-full aspect-video mb-12">
+              <RSIVolChart
+                interval={RSIInterval._15Minutes}
+                allSymbols={allSymbols}
+                klineSeriesList={priceKline15mSeriesList}
+                priceNowList={priceNowList}
+              />
+            </div>
             <h2 className="text-center text-sm text-zinc-600 font-bold mb-4">
               RSI 14 & Volumes 1H
             </h2>

@@ -17,16 +17,19 @@ import {PriceKlineSeries, PriceNow} from '../services/PriceDataSource';
 import {Result} from '../devkit';
 
 export enum RSIInterval {
+  _15Minutes = '15m',
   _1Hour = '1h',
   _1Day = '1d',
 }
 
 const timefmt: Record<RSIInterval, (d: Date) => string> = {
+  [RSIInterval._15Minutes]: d3.timeFormat('%H:%M'),
   [RSIInterval._1Hour]: d3.timeFormat('%a %H:%M'),
   [RSIInterval._1Day]: d3.utcFormat('%d/%m'),
 };
 
 const volrad: Record<RSIInterval, (v: number) => number> = {
+  [RSIInterval._15Minutes]: d3.scaleLinear([1, 15e7], [2, 60]).clamp(true).unknown(2),
   [RSIInterval._1Hour]: d3.scaleLinear([1, 6e8], [2, 60]).clamp(true).unknown(2),
   [RSIInterval._1Day]: d3.scaleLinear([1, 9e9], [2, 60]).clamp(true).unknown(2),
 };
