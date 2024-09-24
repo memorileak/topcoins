@@ -45,6 +45,7 @@ export class AppModule implements OnApplicationBootstrap {
     });
     (await this.sqliteDatabase.initialize()).unwrap();
     (await this.priceRepo.initialize()).unwrap();
+    (await this.priceCrawler.initiallyCrawlKline15Minutes()).unwrap();
     (await this.priceCrawler.initiallyCrawlKline1Hour()).unwrap();
     (await this.priceCrawler.initiallyCrawlKline1Day()).unwrap();
     (await this.priceCrawler.crawlLatestDataOfPriceNow()).unwrap();
