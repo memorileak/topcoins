@@ -1,4 +1,4 @@
-import {FC, useEffect, useMemo, useRef} from 'react';
+import {FC, useCallback, useEffect, useMemo, useRef} from 'react';
 
 import {Result} from './devkit';
 import {PriceKlineSeries, PriceNow} from './services/PriceDataSource';
@@ -41,6 +41,7 @@ const App: FC<{}> = () => {
     priceKline15mSeriesList,
     priceKline1HSeriesList,
     priceKline1DSeriesList,
+    reloadAllSymbols,
     reloadPriceNowList,
     reloadPriceKline15mSeriesList,
     reloadPriceKline1HSeriesList,
@@ -84,11 +85,25 @@ const App: FC<{}> = () => {
 
   const selectedSymbolsData = useSelectedSymbols();
 
+  const reloadAllData = useCallback(() => {
+    reloadAllSymbols();
+    reloadPriceNowList();
+    reloadPriceKline15mSeriesList();
+    reloadPriceKline1HSeriesList();
+    reloadPriceKline1DSeriesList();
+  }, [
+    reloadAllSymbols,
+    reloadPriceNowList,
+    reloadPriceKline15mSeriesList,
+    reloadPriceKline1HSeriesList,
+    reloadPriceKline1DSeriesList,
+  ]);
+
   return (
     <SelectedSymbolsContext.Provider value={selectedSymbolsData}>
       <div className="w-full xl:w-11/12 xl:mx-auto pt-16 pb-64">
         <h1 className="text-3xl text-center font-bold mb-12">
-          {process.env.REACT_APP_WEBSITE_NAME || "Top Coins"}
+          {process.env.REACT_APP_WEBSITE_NAME || 'Top Coins'}
         </h1>
         <div className="flex flex-col-reverse xl:flex-row flex-wrap">
           <div className="w-full xl:w-2/5 mb-12">
@@ -135,6 +150,29 @@ const App: FC<{}> = () => {
           </div>
         </div>
       </div>
+      <button
+        type="button"
+        className="fixed bottom-8 right-8 rounded-full opacity-50 hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-4 focus:ring-green-300/25 text-green-700 bg-green-600/25 px-5 py-5"
+        onClick={reloadAllData}
+      >
+        <svg
+          className="w-6 h-6"
+          aria-hidden="true"
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M17.651 7.65a7.131 7.131 0 0 0-12.68 3.15M18.001 4v4h-4m-7.652 8.35a7.13 7.13 0 0 0 12.68-3.15M6 20v-4h4"
+          />
+        </svg>
+      </button>
       <Footer />
     </SelectedSymbolsContext.Provider>
   );
