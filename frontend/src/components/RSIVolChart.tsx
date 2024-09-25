@@ -1,4 +1,4 @@
-import {FC, useCallback, useMemo, useState} from 'react';
+import {FC, useMemo} from 'react';
 import * as d3 from 'd3';
 import {
   LineChart,
@@ -14,11 +14,16 @@ import {
 } from 'recharts';
 
 import {PriceKlineSeries} from '../services/PriceDataSource';
+import {useSelectedSymbolsContext} from '../hooks/useSelectedSymbolsContext';
 
 export enum RSIInterval {
   _15Minutes = '15m',
   _1Hour = '1h',
   _1Day = '1d',
+}
+
+function baseCoinOnly(symbol: string): string {
+  return symbol.split('USDT')[0];
 }
 
 const timefmt: Record<RSIInterval, (d: Date) => string> = {
@@ -35,26 +40,8 @@ const volrad: Record<RSIInterval, (v: number) => number> = {
 
 const compactNum = Intl.NumberFormat('en-US', {notation: 'compact'});
 
-function isEmptyObject(obj: object): boolean {
-  for (const prop in obj) {
-    if (Object.hasOwn(obj, prop)) {
-      return false;
-    }
-  }
-  return true;
-}
-
-function isAllFalsyObject(obj: object): boolean {
-  for (const prop in obj) {
-    if ((obj as any)[prop]) {
-      return false;
-    }
-  }
-  return true;
-}
-
 const VolDot = (props: Record<string, any>) => {
-  const {interval, cx, cy, stroke, payload, dataKey, activeSymbols} = props;
+  const {interval, cx, cy, stroke, payload, dataKey, selectedSymbols} = props;
   const symbol = dataKey;
   const quotVolKey = `quotVol_${symbol}`;
   const quotVol = payload[quotVolKey];
@@ -63,7 +50,7 @@ const VolDot = (props: Record<string, any>) => {
   return (
     <g>
       <rect x={cx - r} y={cy - r} width={2 * r} height={2 * r} stroke={color} fill={color} />
-      {activeSymbols[symbol] ? (
+      {selectedSymbols[symbol] ? (
         <text
           textAnchor="middle"
           fontSize="smaller"
@@ -131,29 +118,7 @@ const RSIVolChart: FC<Props> = ({interval, allSymbols, klineSeriesList}) => {
     [allSymbols],
   );
 
-  const [activeSymbols, setActiveSymbols] = useState<Record<string, boolean>>({});
-  const handleToggleSymbol = useCallback(
-    (symbol: string) => {
-      const newActiveSymbols = {...activeSymbols};
-      if (activeSymbols[symbol]) {
-        newActiveSymbols[symbol] = false;
-        if (isAllFalsyObject(newActiveSymbols)) {
-          for (let s in newActiveSymbols) {
-            delete newActiveSymbols[s];
-          }
-        }
-      } else {
-        if (isEmptyObject(newActiveSymbols)) {
-          for (const s of allSymbols) {
-            newActiveSymbols[s] = false;
-          }
-        }
-        newActiveSymbols[symbol] = true;
-      }
-      setActiveSymbols(newActiveSymbols);
-    },
-    [allSymbols, activeSymbols],
-  );
+  const {selectedSymbols, handleToggleSymbol} = useSelectedSymbolsContext();
 
   return (
     <>
@@ -177,22 +142,24 @@ const RSIVolChart: FC<Props> = ({interval, allSymbols, klineSeriesList}) => {
           <ReferenceLine y={50} />
           <Tooltip
             itemSorter={(d) => -(d.value as number)}
+            formatter={(v, s) => [v, baseCoinOnly(s as string)]}
             isAnimationActive={false}
             wrapperStyle={{zIndex: 9999}}
           />
           <Legend
+            formatter={(symbol) => baseCoinOnly(symbol)}
             wrapperStyle={{cursor: 'pointer', userSelect: 'none'}}
             onClick={({value: symbol}) => handleToggleSymbol(symbol)}
           />
           {allSymbols.map((s, i) => (
             <Line
-              hide={activeSymbols[s] === false}
+              hide={selectedSymbols[s] === false}
               key={s}
               type="monotone"
               strokeDasharray="5 1"
               dataKey={s}
               stroke={colorScale(i)}
-              dot={<VolDot interval={interval} activeSymbols={activeSymbols} />}
+              dot={<VolDot interval={interval} selectedSymbols={selectedSymbols} />}
               activeDot={false}
               isAnimationActive={false}
             />

@@ -2,11 +2,16 @@ import {FC, useEffect, useMemo, useState} from 'react';
 import cl from 'classnames';
 
 import {PriceKlineSeries} from '../services/PriceDataSource';
+import {useSelectedSymbolsContext} from '../hooks/useSelectedSymbolsContext';
 
 const compactNum = Intl.NumberFormat('en-US', {notation: 'compact'});
 
 function makeBinancePathParamOfSymbol(symbol: string): string {
   return symbol.split('USDT')[0] + '_USDT';
+}
+
+function baseCoinOnly(symbol: string): string {
+  return symbol.split('USDT')[0];
 }
 
 function r(n: number): number {
@@ -87,6 +92,8 @@ const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList, kline15mSeriesLi
     });
   }, [allSymbols, mapSymbol15mStats]);
 
+  const {selectedSymbols, handleToggleSymbol} = useSelectedSymbolsContext();
+
   return (
     <div className="relative overflow-x-auto">
       <table className="w-full text-sm text-left rtl:text-right text-gray-500 table-fixed">
@@ -127,17 +134,28 @@ const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList, kline15mSeriesLi
                 : 0;
             const latestVelocs = (mapSymbol15mStats[s]?.latestVelocs || []).slice(0, 6);
             return (
-              <tr key={s} className="bg-white border-b">
+              <tr
+                key={s}
+                className={cl('border-b cursor-pointer', {
+                  'bg-white': !selectedSymbols[s],
+                  'bg-yellow-50': selectedSymbols[s],
+                })}
+                onClick={() => handleToggleSymbol(s)}
+              >
                 <th
                   scope="row"
                   className="px-6 py-4 font-medium text-gray-900 overflow-hidden whitespace-nowrap text-ellipsis"
                 >
                   <a
+                    className={cl('hover:underline', {
+                      'font-bold': selectedSymbols[s],
+                      'text-yellow-600': selectedSymbols[s],
+                    })}
                     href={`https://www.binance.com/trade/${makeBinancePathParamOfSymbol(s)}?type=spot`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {s}
+                    {baseCoinOnly(s)}
                   </a>
                 </th>
                 <td

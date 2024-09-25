@@ -3,6 +3,7 @@ import {FC, useEffect, useMemo, useRef} from 'react';
 import {Result} from './devkit';
 import {PriceKlineSeries, PriceNow} from './services/PriceDataSource';
 import {usePriceData} from './hooks/usePriceData';
+import {SelectedSymbolsContext, useSelectedSymbols} from './hooks/useSelectedSymbolsContext';
 import RSIVolChart, {RSIInterval} from './components/RSIVolChart';
 import PricesTable from './components/PricesTable';
 import Footer from './components/Footer';
@@ -81,8 +82,10 @@ const App: FC<{}> = () => {
     [priceKline1DSeriesList, priceNowList],
   );
 
+  const selectedSymbolsData = useSelectedSymbols();
+
   return (
-    <>
+    <SelectedSymbolsContext.Provider value={selectedSymbolsData}>
       <div className="w-full xl:w-11/12 xl:mx-auto pt-16 pb-64">
         <h1 className="text-3xl text-center font-bold mb-12">Top Coins</h1>
         <div className="flex flex-col-reverse xl:flex-row flex-wrap">
@@ -131,7 +134,7 @@ const App: FC<{}> = () => {
         </div>
       </div>
       <Footer />
-    </>
+    </SelectedSymbolsContext.Provider>
   );
 };
 
