@@ -154,6 +154,7 @@ const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList, kline15mSeriesLi
                     href={`https://www.binance.com/trade/${makeBinancePathParamOfSymbol(s)}?type=spot`}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     {baseCoinOnly(s)}
                   </a>
