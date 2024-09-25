@@ -132,7 +132,7 @@ const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList, kline15mSeriesLi
                 ? Math.round(100 * ((100 * (todayLatestPrice - todayOpenPrice)) / todayOpenPrice)) /
                   100
                 : 0;
-            const latestVelocs = (mapSymbol15mStats[s]?.latestVelocs || []).slice(0, 6);
+            const latestVelocs = (mapSymbol15mStats[s]?.latestVelocs || []).slice(0, 12);
             return (
               <tr
                 key={s}
