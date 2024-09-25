@@ -41,9 +41,9 @@ const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList, kline15mSeriesLi
     for (const kline1dSeries of kline1DSeriesList) {
       const symbol = kline1dSeries.symbol;
       const klineData = kline1dSeries.priceKlineData || [];
-      const todayQuotVol = klineData[klineData.length - 1].quotVol;
-      const todayOpenPrice = klineData[klineData.length - 1].openPrice;
-      const todayLatestPrice = klineData[klineData.length - 1].closePrice;
+      const todayQuotVol = klineData[klineData.length - 1]?.quotVol ?? 0;
+      const todayOpenPrice = klineData[klineData.length - 1]?.openPrice ?? 0;
+      const todayLatestPrice = klineData[klineData.length - 1]?.closePrice ?? 0;
       symbol1DStats[symbol] = {todayQuotVol, todayOpenPrice, todayLatestPrice};
     }
     return symbol1DStats;
@@ -62,7 +62,7 @@ const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList, kline15mSeriesLi
         if ((newMap[symbol]?.latestVelocs || []).length > 0) {
           const latestVelocs = newMap[symbol].latestVelocs;
           const prevRSI14Value = newMap[symbol].latestRSI14Value;
-          const latestRSI14Value = klineData[klineData.length - 1]?.rsi14 || 0;
+          const latestRSI14Value = klineData[klineData.length - 1]?.rsi14 ?? 0;
           latestVelocs.unshift(r(latestRSI14Value - prevRSI14Value));
           newMap[symbol].latestVelocs = latestVelocs.slice(0, MAX_LEN_LATEST_VELOCS);
         } else {
