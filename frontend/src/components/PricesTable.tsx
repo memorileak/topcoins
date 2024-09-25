@@ -102,7 +102,7 @@ const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList, kline15mSeriesLi
               scope="col"
               className="w-1/3 px-6 py-3 overflow-hidden whitespace-nowrap text-ellipsis"
             >
-              RSIChg
+              RSIChg 15m
             </th>
           </tr>
         </thead>
