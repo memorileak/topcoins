@@ -57,6 +57,8 @@ export class PriceKline {
     this.lowPrice = initData.lowPrice ?? this.lowPrice;
     this.closePrice = initData.closePrice ?? this.closePrice;
     this.rsi14 = initData.rsi14 ?? this.rsi14;
+    this.rsi14Min = initData.rsi14Min ?? this.rsi14Min;
+    this.rsi14Max = initData.rsi14Max ?? this.rsi14Max;
   }
 
   symbol: string = '';
@@ -72,6 +74,8 @@ export class PriceKline {
   lowPrice: number = 0;
   closePrice: number = 0;
   rsi14: number = 0;
+  rsi14Min: number = 0;
+  rsi14Max: number = 0;
 }
 
 export type PriceKlineSeries = {
@@ -155,7 +159,15 @@ export class PriceDataSource {
         const symbol = symbols[i];
         const rsi14Indexer = new RSI(14);
         for (const pk of priceKlineData) {
-          rsi14Indexer.update(pk.closePrice);
+          rsi14Indexer.update(pk.lowPrice);
+          pk.rsi14Min = Result.fromExecution(() =>
+            parseFloat(rsi14Indexer.getResult().toFixed(2)),
+          ).unwrapOr(0);
+          rsi14Indexer.replace(pk.highPrice);
+          pk.rsi14Max = Result.fromExecution(() =>
+            parseFloat(rsi14Indexer.getResult().toFixed(2)),
+          ).unwrapOr(0);
+          rsi14Indexer.replace(pk.closePrice);
           pk.rsi14 = Result.fromExecution(() =>
             parseFloat(rsi14Indexer.getResult().toFixed(2)),
           ).unwrapOr(0);
@@ -167,4 +179,3 @@ export class PriceDataSource {
     });
   }
 }
-

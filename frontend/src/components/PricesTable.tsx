@@ -15,7 +15,7 @@ function baseCoinOnly(symbol: string): string {
 }
 
 function r(n: number): number {
-  return Math.round(100 * n) / 100;
+  return Math.round(10 * n) / 10;
 }
 
 type Props = {
@@ -31,8 +31,7 @@ type Symbol1DStats = {
 };
 
 type Symbol15mStats = {
-  latestRSI14Value: number;
-  latestVelocs: number[];
+  rsichg: [number, number, number];
 };
 
 const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList, kline15mSeriesList}) => {
@@ -53,30 +52,18 @@ const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList, kline15mSeriesLi
   useEffect(() => {
     setMapSymbol15mStats((oldMap) => {
       const newMap = {...oldMap};
-      const MAX_LEN_LATEST_VELOCS = 100;
 
       for (const kline15mSeries of kline15mSeriesList) {
         const symbol = kline15mSeries.symbol;
         const klineData = kline15mSeries.priceKlineData || [];
-
-        if ((newMap[symbol]?.latestVelocs || []).length > 0) {
-          const latestVelocs = newMap[symbol].latestVelocs;
-          const prevRSI14Value = newMap[symbol].latestRSI14Value;
-          const latestRSI14Value = klineData[klineData.length - 1]?.rsi14 ?? 0;
-          latestVelocs.unshift(r(latestRSI14Value - prevRSI14Value));
-          newMap[symbol].latestVelocs = latestVelocs.slice(0, MAX_LEN_LATEST_VELOCS);
-        } else {
-          let latestRSI14Value: number | null = null;
-          const latestVelocs = [];
-          for (const pk of klineData) {
-            latestVelocs.unshift(r(latestRSI14Value ? pk.rsi14 - latestRSI14Value : 0));
-            latestRSI14Value = pk.rsi14;
-          }
-          newMap[symbol] = {
-            latestRSI14Value: latestRSI14Value || 0,
-            latestVelocs: latestVelocs.slice(0, MAX_LEN_LATEST_VELOCS),
-          };
-        }
+        const latestKline = klineData[klineData.length - 1];
+        const previousKline = klineData[klineData.length - 2];
+        const difVsMin = (latestKline?.rsi14 ?? 0) - (latestKline?.rsi14Min ?? 0);
+        const difVsMax = (latestKline?.rsi14 ?? 0) - (latestKline?.rsi14Max ?? 0);
+        const difVsPrev = previousKline
+          ? (latestKline?.rsi14 ?? 0) - (previousKline?.rsi14 ?? 0)
+          : 0;
+        newMap[symbol] = {rsichg: [difVsMin, difVsPrev, difVsMax]};
       }
 
       return newMap;
@@ -85,10 +72,7 @@ const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList, kline15mSeriesLi
 
   const sortedSymbols = useMemo<string[]>(() => {
     return [...allSymbols].sort((a, b) => {
-      return (
-        (mapSymbol15mStats[b]?.latestVelocs?.[0] || 0) -
-        (mapSymbol15mStats[a]?.latestVelocs?.[0] || 0)
-      );
+      return (mapSymbol15mStats[b]?.rsichg?.[0] || 0) - (mapSymbol15mStats[a]?.rsichg?.[0] || 0);
     });
   }, [allSymbols, mapSymbol15mStats]);
 
@@ -118,7 +102,7 @@ const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList, kline15mSeriesLi
               scope="col"
               className="w-1/3 px-6 py-3 overflow-hidden whitespace-nowrap text-ellipsis"
             >
-              Velocs
+              RSIChg
             </th>
           </tr>
         </thead>
@@ -132,7 +116,7 @@ const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList, kline15mSeriesLi
                 ? Math.round(100 * ((100 * (todayLatestPrice - todayOpenPrice)) / todayOpenPrice)) /
                   100
                 : 0;
-            const latestVelocs = (mapSymbol15mStats[s]?.latestVelocs || []).slice(0, 12);
+            const rsichg = (mapSymbol15mStats[s]?.rsichg || [0, 0, 0]).map((v) => r(v));
             return (
               <tr
                 key={s}
@@ -184,10 +168,10 @@ const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList, kline15mSeriesLi
                   ${compactNum.format(todayQuotVol)}
                 </td>
                 <td className="px-6 py-4 overflow-hidden whitespace-nowrap text-ellipsis">
-                  <div className="w-full flex flex-wrap items-center">
-                    {latestVelocs.map((v) => (
+                  <div className="w-full flex items-center">
+                    {rsichg.map((v) => (
                       <span
-                        className={cl('mr-2', {
+                        className={cl('inline-block w-10', {
                           'text-green-600': v > 0,
                           'text-red-600': v < 0,
                         })}

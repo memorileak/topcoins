@@ -21,9 +21,24 @@ function updateKlineSeriesListWithPriceNowList(
   for (const klineSeries of klineSeriesList) {
     const priceKlineData = klineSeries.priceKlineData || [];
     const latestKline = priceKlineData[priceKlineData.length - 1];
-    if (latestKline) {
-      latestKline.closePrice =
-        mapSymbolPriceNow[klineSeries.symbol]?.price ?? latestKline.closePrice;
+    if (latestKline && mapSymbolPriceNow[klineSeries.symbol]?.price) {
+      const latestPrice = mapSymbolPriceNow[klineSeries.symbol]?.price ?? 0;
+      latestKline.closePrice = latestPrice;
+      latestKline.highPrice =
+        latestPrice > latestKline.highPrice ? latestPrice : latestKline.highPrice;
+      latestKline.lowPrice =
+        latestPrice < latestKline.lowPrice ? latestPrice : latestKline.lowPrice;
+
+      klineSeries.rsi14Indexer.replace(latestKline.lowPrice);
+      latestKline.rsi14Min = Result.fromExecution(() =>
+        parseFloat(klineSeries.rsi14Indexer.getResult().toFixed(2)),
+      ).unwrapOr(0);
+
+      klineSeries.rsi14Indexer.replace(latestKline.highPrice);
+      latestKline.rsi14Max = Result.fromExecution(() =>
+        parseFloat(klineSeries.rsi14Indexer.getResult().toFixed(2)),
+      ).unwrapOr(0);
+
       klineSeries.rsi14Indexer.replace(latestKline.closePrice);
       latestKline.rsi14 = Result.fromExecution(() =>
         parseFloat(klineSeries.rsi14Indexer.getResult().toFixed(2)),
