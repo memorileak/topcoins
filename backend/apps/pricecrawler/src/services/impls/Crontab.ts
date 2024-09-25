@@ -18,22 +18,22 @@ export class Crontab {
     (await this.priceCrawler.crawlLatestDataOfPriceNow()).errThen(this.showError);
   }
 
-  // Runs every 3 minutes, at 10 seconds past the minute
-  @Cron('10 */3 * * * *')
+  // Runs every minutes, at 10 seconds past the minute
+  @Cron('10 * * * * *')
   async runCrawlingKline15MinutesOfCurrent15Minutes(): Promise<void> {
     this.logger.debug('Running method: runCrawlingKline15MinutesOfCurrent15Minutes');
     (await this.priceCrawler.crawlKlineDataOfCurrent15Minutes()).errThen(this.showError);
   }
 
-  // Runs every 3 minutes, at 70 seconds past the minute (1 minute and 10 seconds)
-  @Cron('10 1-58/3 * * * *')
+  // Runs every even minutes, at 20 seconds past the minute
+  @Cron('20 0-58/2 * * * *')
   async runCrawlingKline1HourOfCurrentHour(): Promise<void> {
     this.logger.debug('Running method: runCrawlingKline1HourOfCurrentHour');
     (await this.priceCrawler.crawlKlineDataOfCurrentHour()).errThen(this.showError);
   }
 
-  // Runs every 3 minutes, at 130 seconds past the minute (2 minutes and 10 seconds)
-  @Cron('10 2-59/3 * * * *')
+  // Runs every odd minutes, at 20 seconds past the minute
+  @Cron('20 1-59/2 * * * *')
   async runCrawlingKline1DayOfCurrentDay(): Promise<void> {
     this.logger.debug('Running method: runCrawlingKline1DayOfCurrentDay');
     (await this.priceCrawler.crawlKlineDataOfCurrentDay()).errThen(this.showError);
@@ -47,14 +47,14 @@ export class Crontab {
   }
 
   // Runs at 1 minute past every hour
-  @Cron('1 * * * *')
+  @Cron('5 1 * * * *')
   async runKline1HourCrawling(): Promise<void> {
     this.logger.debug('Running method: runKline1HourCrawling');
     (await this.priceCrawler.crawlLatestDataOfKline1Hour()).errThen(this.showError);
   }
 
   // Runs at 2 minutes past midnight (00:02) UTC every day
-  @Cron('2 0 * * *', {timeZone: 'Etc/UTC'})
+  @Cron('5 2 0 * * *', {timeZone: 'Etc/UTC'})
   async runKline1DayCrawling(): Promise<void> {
     this.logger.debug('Running method: runKline1DayCrawling');
     (await this.priceCrawler.crawlLatestDataOfKline1Day()).errThen(this.showError);
