@@ -56,14 +56,14 @@ const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList, kline15mSeriesLi
       for (const kline15mSeries of kline15mSeriesList) {
         const symbol = kline15mSeries.symbol;
         const klineData = kline15mSeries.priceKlineData || [];
-        const latestKline = klineData[klineData.length - 1];
         const previousKline = klineData[klineData.length - 2];
-        const difVsMin = (latestKline?.rsi14 ?? 0) - (latestKline?.rsi14Min ?? 0);
-        const difVsMax = (latestKline?.rsi14 ?? 0) - (latestKline?.rsi14Max ?? 0);
-        const difVsPrev = previousKline
+        const latestKline = klineData[klineData.length - 1];
+        const diffVsPrev = previousKline
           ? (latestKline?.rsi14 ?? 0) - (previousKline?.rsi14 ?? 0)
           : 0;
-        newMap[symbol] = {rsichg: [difVsMin, difVsPrev, difVsMax]};
+        const diffVsMin = (latestKline?.rsi14 ?? 0) - (latestKline?.rsi14Min ?? 0);
+        const diffVsMax = (latestKline?.rsi14 ?? 0) - (latestKline?.rsi14Max ?? 0);
+        newMap[symbol] = {rsichg: [diffVsPrev, diffVsMin, diffVsMax]};
       }
 
       return newMap;
@@ -72,7 +72,7 @@ const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList, kline15mSeriesLi
 
   const sortedSymbols = useMemo<string[]>(() => {
     return [...allSymbols].sort((a, b) => {
-      return (mapSymbol15mStats[b]?.rsichg?.[0] || 0) - (mapSymbol15mStats[a]?.rsichg?.[0] || 0);
+      return (mapSymbol15mStats[a]?.rsichg?.[0] || 0) - (mapSymbol15mStats[b]?.rsichg?.[0] || 0);
     });
   }, [allSymbols, mapSymbol15mStats]);
 
