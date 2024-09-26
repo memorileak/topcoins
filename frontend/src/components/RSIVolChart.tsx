@@ -111,10 +111,9 @@ const RSIVolChart: FC<Props> = ({interval, allSymbols, klineSeriesList}) => {
 
   const colorScale = useMemo(
     () =>
-      d3.scaleQuantize(
-        [0, allSymbols.length],
-        d3.schemeCategory10.concat(d3.schemeDark2).concat(d3.schemeTableau10),
-      ),
+      d3
+        .scaleOrdinal(d3.schemeCategory10.concat(d3.schemeDark2).concat(d3.schemeTableau10))
+        .domain(allSymbols),
     [allSymbols],
   );
 
@@ -151,14 +150,14 @@ const RSIVolChart: FC<Props> = ({interval, allSymbols, klineSeriesList}) => {
             wrapperStyle={{cursor: 'pointer', userSelect: 'none'}}
             onClick={({value: symbol}) => handleToggleSymbol(symbol)}
           />
-          {allSymbols.map((s, i) => (
+          {allSymbols.map((s) => (
             <Line
               hide={selectedSymbols[s] === false}
               key={s}
               type="monotone"
               strokeDasharray="5 1"
               dataKey={s}
-              stroke={colorScale(i)}
+              stroke={colorScale(s)}
               dot={<VolDot interval={interval} selectedSymbols={selectedSymbols} />}
               activeDot={false}
               isAnimationActive={false}
