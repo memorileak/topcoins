@@ -113,7 +113,7 @@ const RSIVolChart: FC<Props> = ({interval, allSymbols, klineSeriesList}) => {
     () =>
       d3.scaleQuantize(
         [0, allSymbols.length],
-        d3.schemeCategory10.concat(d3.schemeSet1).concat(d3.schemeDark2).concat(d3.schemeTableau10),
+        d3.schemeCategory10.concat(d3.schemeDark2).concat(d3.schemeTableau10),
       ),
     [allSymbols],
   );
