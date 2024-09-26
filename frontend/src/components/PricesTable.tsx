@@ -31,6 +31,7 @@ type Symbol1DStats = {
 };
 
 type Symbol15mStats = {
+  rsival: [number, number, number];
   rsichg: [number, number, number];
 };
 
@@ -58,12 +59,20 @@ const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList, kline15mSeriesLi
         const klineData = kline15mSeries.priceKlineData || [];
         const previousKline = klineData[klineData.length - 2];
         const latestKline = klineData[klineData.length - 1];
-        const diffVsPrev = previousKline
-          ? (latestKline?.rsi14 ?? 0) - (previousKline?.rsi14 ?? 0)
-          : 0;
-        const diffVsMin = (latestKline?.rsi14 ?? 0) - (latestKline?.rsi14Min ?? 0);
-        const diffVsMax = (latestKline?.rsi14 ?? 0) - (latestKline?.rsi14Max ?? 0);
-        newMap[symbol] = {rsichg: [diffVsPrev, diffVsMin, diffVsMax]};
+
+        const rsiPrev = previousKline?.rsi14 ?? 0;
+        const rsiCurrent = latestKline?.rsi14 ?? 0;
+        const rsiMin = latestKline?.rsi14Min ?? 0;
+        const rsiMax = latestKline?.rsi14Max ?? 0;
+
+        const diffVsPrev = previousKline ? rsiCurrent - rsiPrev : 0;
+        const diffVsMin = rsiCurrent - rsiMin;
+        const diffVsMax = rsiCurrent - rsiMax;
+
+        newMap[symbol] = {
+          rsival: [rsiCurrent, rsiMin, rsiMax],
+          rsichg: [diffVsPrev, diffVsMin, diffVsMax],
+        };
       }
 
       return newMap;
@@ -117,12 +126,32 @@ const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList, kline15mSeriesLi
                   100
                 : 0;
             const rsichg = (mapSymbol15mStats[s]?.rsichg || [0, 0, 0]).map((v) => r(v));
+            const rsival = (mapSymbol15mStats[s]?.rsival || [0, 0, 0]).map((v) => r(v));
+
+            const [rsiDiff] = rsichg;
+            const isPriceDropSignificantly = rsiDiff <= -10;
+            const isPriceJumpSignificantly = rsiDiff >= 10;
+            if (isPriceJumpSignificantly || isPriceDropSignificantly) {
+              console.log(
+                new Date().toLocaleString(),
+                isPriceJumpSignificantly ? '[JUMP]' : '[DROP]',
+                `[${baseCoinOnly(s)}]`,
+                'RSI Values:',
+                JSON.stringify(rsival),
+                'RSI Change:',
+                JSON.stringify(rsichg),
+              );
+            }
+
             return (
               <tr
                 key={s}
                 className={cl('border-b cursor-pointer', {
-                  'bg-white': !selectedSymbols[s],
-                  'bg-yellow-50': selectedSymbols[s],
+                  'bg-white':
+                    !selectedSymbols[s] && !isPriceJumpSignificantly && !isPriceDropSignificantly,
+                  'bg-yellow-100': selectedSymbols[s],
+                  'bg-green-100': !selectedSymbols[s] && isPriceJumpSignificantly,
+                  'bg-red-200': !selectedSymbols[s] && isPriceDropSignificantly,
                 })}
                 onClick={() => handleToggleSymbol(s)}
               >
