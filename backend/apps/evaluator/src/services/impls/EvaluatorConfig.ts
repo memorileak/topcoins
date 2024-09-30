@@ -9,7 +9,8 @@ export class EvaluatorConfig {
   @Expose() telegramBotToken = '';
   @Expose() telegramChatId = 0;
   @Expose() databaseFileName = '';
-  @Expose() rsiChangeThreshold = 10;
+  @Expose() rsiIncrementThreshold = 10;
+  @Expose() rsiDecrementThreshold = 15;
 
   private filled = false;
 

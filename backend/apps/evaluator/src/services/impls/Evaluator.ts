@@ -118,7 +118,7 @@ export class Evaluator {
 
       const latestPrice = latestPrices?.[latestPrices.length - 1]?.closePrice ?? 0;
       const isInWeakZoneLately = latestRSIs.some((rsi) => rsi <= 30);
-      if (rsiChange >= this.evaluatorConfig.rsiChangeThreshold) {
+      if (rsiChange >= this.evaluatorConfig.rsiIncrementThreshold) {
         const priceChangeCase = isInWeakZoneLately
           ? PriceChangeCases.JUMP_FROM_WEAK
           : PriceChangeCases.JUMP;
@@ -129,7 +129,7 @@ export class Evaluator {
           latestPrice,
           latestRSI14: latestRSIs,
         });
-      } else if (rsiChange <= -this.evaluatorConfig.rsiChangeThreshold) {
+      } else if (rsiChange <= -this.evaluatorConfig.rsiDecrementThreshold) {
         const priceChangeCase = isInWeakZoneLately
           ? PriceChangeCases.DROP_TO_WEAK
           : PriceChangeCases.DROP;

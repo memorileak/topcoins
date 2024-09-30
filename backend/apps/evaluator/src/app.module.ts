@@ -39,7 +39,12 @@ export class AppModule {
       telegramBotToken: this.configService.get<string>('TELEGRAM_BOT_TOKEN', ''),
       telegramChatId: parseInt(this.configService.get<string>('TELEGRAM_CHAT_ID', '0')),
       databaseFileName: this.configService.get<string>('DATABASE_FILE_NAME', 'topcoins.db'),
-      rsiChangeThreshold: parseFloat(this.configService.get<string>('RSI_CHANGE_THRESHOLD', '10')),
+      rsiIncrementThreshold: parseFloat(
+        this.configService.get<string>('RSI_INCREMENT_THRESHOLD', '10'),
+      ),
+      rsiDecrementThreshold: parseFloat(
+        this.configService.get<string>('RSI_DECREMENT_THRESHOLD', '15'),
+      ),
     });
     (await this.sqliteDatabase.initialize()).unwrap();
     (await this.evaluator.initialize()).unwrap();
