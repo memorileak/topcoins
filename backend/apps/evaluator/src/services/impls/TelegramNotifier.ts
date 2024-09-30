@@ -28,11 +28,13 @@ export class TelegramNotifier {
         .getNotifications((noti) => !noti.sentToTelegram)
         .unwrapOr([]);
 
-      pendingNotifications.unshift(
-        Notification.newFromMessage(
-          ['`================================`', '`================================`'].join('\n'),
-        ),
-      );
+      if (pendingNotifications.length > 0) {
+        pendingNotifications.unshift(
+          Notification.newFromMessage(
+            ['`================================`', '`================================`'].join('\n'),
+          ),
+        );
+      }
 
       for (const noti of pendingNotifications) {
         await firstValueFrom(
