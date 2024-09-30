@@ -27,8 +27,8 @@ export class Notification {
       `*${Notification.baseCoinOnly(symbol).unwrapOr('?')} - ${priceChangeCase}*`,
       '',
       `Price: *${currencyFormat.format(latestPrice)}*`,
-      `RSI14 15m changes lately: *${numberFormat.format(rsiChange)}*`,
-      `Most recent RSI14 15m values: *${latestRSI14.join(', ')}*`,
+      `RSI change: *${rsiChange > 0 ? '+' : ''}${numberFormat.format(rsiChange)}*`,
+      `RSI values: *${latestRSI14.join(', ')}*`,
       '',
       `_Time: ${new Date().toLocaleString('en-US')}_`,
     ]

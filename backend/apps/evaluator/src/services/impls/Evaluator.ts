@@ -93,7 +93,7 @@ export class Evaluator {
   private evaluateSymbol(symbol: string): Promise<Result<Option<EvaluationResult>>> {
     return Result.fromExecutionAsync(async () => {
       const kline15mPrices = (await this.getKline15mPricesOfSymbol(symbol)).unwrap();
-      const latestPrices = kline15mPrices.slice(kline15mPrices.length - 5);
+      const latestPrices = kline15mPrices.slice(kline15mPrices.length - 7);
       const latestRSIs = latestPrices.map((p) => p.rsi14);
 
       let prev = latestPrices[0];
