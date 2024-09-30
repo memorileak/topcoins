@@ -14,12 +14,12 @@ import {DbExposeController} from './controllers/DbExposeController';
 export class AppModule implements OnApplicationBootstrap {
   constructor(
     private readonly configService: ConfigService,
-    private readonly priceCrawlerConfig: DbExposerConfig,
+    private readonly dbExposerConfig: DbExposerConfig,
     private readonly sqliteDatabase: SqliteDatabase,
   ) {}
 
   async onApplicationBootstrap() {
-    this.priceCrawlerConfig.fill({
+    this.dbExposerConfig.fill({
       databaseFileName: this.configService.get<string>('DATABASE_FILE_NAME', 'topcoins.db'),
     });
     (await this.sqliteDatabase.initialize()).unwrap();
