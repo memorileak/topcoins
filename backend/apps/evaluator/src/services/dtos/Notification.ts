@@ -34,6 +34,7 @@ export class Notification {
     ]
       .join('\n')
       .replace(/-/g, '\\-')
+      .replace(/\+/g, '\\+')
       .replace(/\./g, '\\.');
     return Notification.newFromMessage(message);
   }
