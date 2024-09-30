@@ -17,7 +17,7 @@ export class Crontab {
     this.showError = this.showError.bind(this);
   }
 
-  @Cron('*/30 * * * * *')
+  @Cron('5 * * * * *')
   async runEvaluatingAllSymbols(): Promise<void> {
     this.logger.debug('Running method: runEvaluatingAllSymbols');
     (await this.evaluator.evaluateAllSymbols()).errThen(this.showError);
