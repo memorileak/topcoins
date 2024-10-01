@@ -95,28 +95,29 @@ export class Evaluator {
   private evaluateSymbol(symbol: string): Promise<Result<Option<EvaluationResult>>> {
     return Result.fromExecutionAsync(async () => {
       const kline15mPrices = (await this.getKline15mPricesOfSymbol(symbol)).unwrap();
-      const latestPrices = kline15mPrices.slice(kline15mPrices.length - 7);
+      const latestPrices = kline15mPrices.slice(kline15mPrices.length - 9);
       const latestRSIs = latestPrices.map((p) => p.rsi14);
 
+      const positiveRange: [number, number] = [0, Infinity];
+      const negativeRange: [number, number] = [-Infinity, 0];
       let prev = latestPrices[0];
-      let rsiChange = 0;
+      let rsiInc = 0;
+      let rsiDec = 0;
       let direction = 0;
+
       for (let i = 1; i < latestPrices.length; i += 1) {
         let curr = latestPrices[i];
         let rsiChg = curr.rsi14 - prev.rsi14;
-        if (rsiChg >= 0 && direction >= 0) {
-          rsiChange += rsiChg;
-          direction = 1;
-        } else if (rsiChg < 0 && direction <= 0) {
-          rsiChange += rsiChg;
-          direction = -1;
-        } else {
-          rsiChange = rsiChg;
-          direction = rsiChg >= 0 ? 1 : -1;
-        }
+        rsiInc = this.clamp(rsiInc + rsiChg, positiveRange);
+        rsiDec = this.clamp(rsiDec + rsiChg, negativeRange);
+        direction = rsiChg >= 0 ? 1 : -1;
         prev = curr;
       }
-      rsiChange = Math.floor(100 * rsiChange) / 100;
+
+      rsiInc = Math.floor(100 * rsiInc) / 100;
+      rsiDec = Math.floor(100 * rsiDec) / 100;
+
+      const rsiChange = direction >= 0 ? rsiInc : rsiDec;
 
       const latestPrice = latestPrices?.[latestPrices.length - 1]?.closePrice ?? 0;
       const isInWeakZoneLately = latestRSIs.some((rsi) => rsi <= 30);
@@ -127,7 +128,7 @@ export class Evaluator {
         return Option.some<EvaluationResult>({
           symbol,
           priceChangeCase,
-          rsiChange: rsiChange,
+          rsiChange,
           latestPrice,
           latestRSI14: latestRSIs,
         });
@@ -138,7 +139,7 @@ export class Evaluator {
         return Option.some<EvaluationResult>({
           symbol,
           priceChangeCase,
-          rsiChange: rsiChange,
+          rsiChange,
           latestPrice,
           latestRSI14: latestRSIs,
         });
@@ -146,6 +147,17 @@ export class Evaluator {
 
       return Option.none();
     });
+  }
+
+  private clamp(n: number, domain: [number, number]): number {
+    const [min, max] = domain;
+    if (n < min) {
+      return min;
+    } else if (n > max) {
+      return max;
+    } else {
+      return n;
+    }
   }
 
   private handleError(err: any): void {
