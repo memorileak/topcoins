@@ -32,18 +32,23 @@ export class Evaluator {
   evaluateAllSymbols(): Promise<Result<void>> {
     return Result.fromExecutionAsync(async () => {
       const allSymbols = (await this.getAllSymbols()).unwrap();
+      const evaluations: EvaluationResult[] = [];
       for (const symbol of allSymbols) {
         const evaluationResult = await this.evaluateSymbol(symbol);
         evaluationResult.errThen(this.handleError);
         evaluationResult.okThen((evaluationOption) => {
           evaluationOption.someThen((evaluation) => {
             if (this.evaluatorConfig.enableNotiForCases.includes(evaluation.priceChangeCase)) {
-              this.notificationQueue
-                .pushNotification(Notification.newFromEvaluationResult(evaluation))
-                .unwrap();
+              evaluations.push(evaluation);
             }
           });
         });
+      }
+      evaluations.sort((a, b) => this.last(b.latestRSI14) - this.last(a.latestRSI14));
+      for (const evaluation of evaluations) {
+        this.notificationQueue
+          .pushNotification(Notification.newFromEvaluationResult(evaluation))
+          .unwrap();
       }
     });
   }
@@ -158,6 +163,10 @@ export class Evaluator {
     } else {
       return n;
     }
+  }
+
+  private last<T>(list: T[]): T {
+    return list[list.length - 1];
   }
 
   private handleError(err: any): void {
