@@ -21,21 +21,26 @@ export class Notification {
     return Result.fromExecution(() => symbol.split('USDT')[0] ?? '');
   }
 
-  static newFromEvaluationResult(evaluation: EvaluationResult): Notification {
-    const {symbol, priceChangeCase, rsiChange, latestPrice, latestRSI14} = evaluation;
-    const message = [
-      [
-        `*${Notification.baseCoinOnly(symbol).unwrapOr('?')}*`,
-        `*${rsiChange > 0 ? '+' : ''}${numberFormat.format(rsiChange)}*`,
-        `*${priceChangeCase.replace(/_/g, '\\_')}*`,
-      ].join(' '),
-      `Price: *${currencyFormat.format(latestPrice)}*`,
-      `RSI: *${latestRSI14.join(', ')}*`,
-    ]
-      .join('\n')
-      .replace(/-/g, '\\-')
-      .replace(/\+/g, '\\+')
-      .replace(/\./g, '\\.');
+  static newFromEvaluations(evaluations: EvaluationResult[]): Notification {
+    const messages: string[] = [`_Time: ${new Date().toLocaleString('en-US')}_`];
+    for (const evaluation of evaluations) {
+      const {symbol, priceChangeCase, rsiChange, latestPrice, latestRSI14} = evaluation;
+      const message = [
+        [
+          `*${Notification.baseCoinOnly(symbol).unwrapOr('?')}*`,
+          `\`${priceChangeCase.replace(/_/g, '\\_')}\``,
+          `\`${rsiChange > 0 ? '+' : ''}${numberFormat.format(rsiChange)}\``,
+        ].join('  '),
+        `*${currencyFormat.format(latestPrice)}*`,
+        `${latestRSI14.join(', ')}`,
+      ]
+        .join('\n')
+        .replace(/-/g, '\\-')
+        .replace(/\+/g, '\\+')
+        .replace(/\./g, '\\.');
+      messages.push(message);
+    }
+    const message = messages.join('\n\n');
     return Notification.newFromMessage(message);
   }
 

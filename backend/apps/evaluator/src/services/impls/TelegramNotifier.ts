@@ -28,12 +28,6 @@ export class TelegramNotifier {
         .getNotifications((noti) => !noti.sentToTelegram)
         .unwrapOr([]);
 
-      if (pendingNotifications.length > 0) {
-        pendingNotifications.unshift(
-          Notification.newFromMessage(`_Time: ${new Date().toLocaleString('en-US')}_`),
-        );
-      }
-
       for (const noti of pendingNotifications) {
         await firstValueFrom(
           this.httpService.post(

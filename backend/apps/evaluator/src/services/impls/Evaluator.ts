@@ -44,12 +44,16 @@ export class Evaluator {
           });
         });
       }
-      evaluations.sort((a, b) => this.last(b.latestRSI14) - this.last(a.latestRSI14));
-      for (const evaluation of evaluations) {
-        this.notificationQueue
-          .pushNotification(Notification.newFromEvaluationResult(evaluation))
-          .unwrap();
-      }
+      evaluations.sort(
+        (a, b) =>
+          this.scoreOfPriceChangeCase(b.priceChangeCase) +
+          this.last(b.latestRSI14) -
+          this.scoreOfPriceChangeCase(a.priceChangeCase) -
+          this.last(a.latestRSI14),
+      );
+      this.notificationQueue
+        .pushNotification(Notification.newFromEvaluations(evaluations))
+        .unwrap();
     });
   }
 
@@ -167,6 +171,17 @@ export class Evaluator {
 
   private last<T>(list: T[]): T {
     return list[list.length - 1];
+  }
+
+  private scoreOfPriceChangeCase(priceChangeCase: PriceChangeCases): number {
+    return (
+      {
+        [PriceChangeCases.JUMP_FROM_WEAK]: 400,
+        [PriceChangeCases.JUMP]: 300,
+        [PriceChangeCases.DROP]: 200,
+        [PriceChangeCases.DROP_TO_WEAK]: 100,
+      }[priceChangeCase] ?? 0
+    );
   }
 
   private handleError(err: any): void {
