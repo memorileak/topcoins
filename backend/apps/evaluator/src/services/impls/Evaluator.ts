@@ -37,9 +37,11 @@ export class Evaluator {
         evaluationResult.errThen(this.handleError);
         evaluationResult.okThen((evaluationOption) => {
           evaluationOption.someThen((evaluation) => {
-            this.notificationQueue
-              .pushNotification(Notification.newFromEvaluationResult(evaluation))
-              .unwrap();
+            if (this.evaluatorConfig.enableNotiForCases.includes(evaluation.priceChangeCase)) {
+              this.notificationQueue
+                .pushNotification(Notification.newFromEvaluationResult(evaluation))
+                .unwrap();
+            }
           });
         });
       }

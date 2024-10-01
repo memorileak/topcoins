@@ -11,6 +11,7 @@ export class EvaluatorConfig {
   @Expose() databaseFileName = '';
   @Expose() rsiIncrementThreshold = 10;
   @Expose() rsiDecrementThreshold = 15;
+  @Expose() enableNotiForCases: string[] = [];
 
   private filled = false;
 

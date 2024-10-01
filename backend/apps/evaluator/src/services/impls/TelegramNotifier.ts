@@ -30,9 +30,7 @@ export class TelegramNotifier {
 
       if (pendingNotifications.length > 0) {
         pendingNotifications.unshift(
-          Notification.newFromMessage(
-            ['`================================`', '`================================`'].join('\n'),
-          ),
+          Notification.newFromMessage(`_Time: ${new Date().toLocaleString('en-US')}_`),
         );
       }
 

@@ -24,13 +24,13 @@ export class Notification {
   static newFromEvaluationResult(evaluation: EvaluationResult): Notification {
     const {symbol, priceChangeCase, rsiChange, latestPrice, latestRSI14} = evaluation;
     const message = [
-      `*${Notification.baseCoinOnly(symbol).unwrapOr('?')} - ${priceChangeCase}*`,
-      '',
+      [
+        `*${Notification.baseCoinOnly(symbol).unwrapOr('?')}*`,
+        `*${rsiChange > 0 ? '+' : ''}${numberFormat.format(rsiChange)}*`,
+        `*${priceChangeCase.replace(/_/g, '\\_')}*`,
+      ].join(' '),
       `Price: *${currencyFormat.format(latestPrice)}*`,
-      `RSI change: *${rsiChange > 0 ? '+' : ''}${numberFormat.format(rsiChange)}*`,
-      `RSI values: *${latestRSI14.join(', ')}*`,
-      '',
-      `_Time: ${new Date().toLocaleString('en-US')}_`,
+      `RSI: *${latestRSI14.join(', ')}*`,
     ]
       .join('\n')
       .replace(/-/g, '\\-')

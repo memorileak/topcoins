@@ -45,6 +45,11 @@ export class AppModule {
       rsiDecrementThreshold: parseFloat(
         this.configService.get<string>('RSI_DECREMENT_THRESHOLD', '15'),
       ),
+      enableNotiForCases: this.configService
+        .get<string>('ENABLE_NOTI_FOR_CASES', '')
+        .split(',')
+        .map(item => item.trim())
+        .filter(item => item !== ''),
     });
     (await this.sqliteDatabase.initialize()).unwrap();
     (await this.evaluator.initialize()).unwrap();
