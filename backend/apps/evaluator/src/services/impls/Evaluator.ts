@@ -51,9 +51,11 @@ export class Evaluator {
           this.scoreOfPriceChangeCase(a.priceChangeCase) -
           this.last(a.latestRSI14),
       );
-      this.notificationQueue
-        .pushNotification(Notification.newFromEvaluations(evaluations))
-        .unwrap();
+      if (evaluations.length > 0) {
+        this.notificationQueue
+          .pushNotification(Notification.newFromEvaluations(evaluations))
+          .unwrap();
+      }
     });
   }
 
