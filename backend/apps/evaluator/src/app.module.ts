@@ -39,11 +39,17 @@ export class AppModule {
       telegramBotToken: this.configService.get<string>('TELEGRAM_BOT_TOKEN', ''),
       telegramChatId: parseInt(this.configService.get<string>('TELEGRAM_CHAT_ID', '0')),
       databaseFileName: this.configService.get<string>('DATABASE_FILE_NAME', 'topcoins.db'),
-      rsiIncrementThreshold: parseFloat(
-        this.configService.get<string>('RSI_INCREMENT_THRESHOLD', '10'),
+      jumpThreshold: parseFloat(
+        this.configService.get<string>('JUMP_THRESHOLD', '10'),
       ),
-      rsiDecrementThreshold: parseFloat(
-        this.configService.get<string>('RSI_DECREMENT_THRESHOLD', '15'),
+      dropThreshold: parseFloat(
+        this.configService.get<string>('DROP_THRESHOLD', '15'),
+      ),
+      jumpFromWeakThreshold: parseFloat(
+        this.configService.get<string>('JUMP_FROM_WEAK_THRESHOLD', '5'),
+      ),
+      dropToWeakThreshold: parseFloat(
+        this.configService.get<string>('DROP_TO_WEAK_THRESHOLD', '5'),
       ),
       enableNotiForCases: this.configService
         .get<string>('ENABLE_NOTI_FOR_CASES', '')

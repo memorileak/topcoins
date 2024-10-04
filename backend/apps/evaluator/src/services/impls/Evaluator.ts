@@ -131,23 +131,22 @@ export class Evaluator {
       const rsiChange = direction >= 0 ? rsiInc : rsiDec;
 
       const latestPrice = latestPrices?.[latestPrices.length - 1]?.closePrice ?? 0;
-      const lastThreeRSIs = latestRSIs.slice(latestRSIs.length - 3);
-      const isInWeakZoneLately = lastThreeRSIs.some((rsi) => rsi <= 30);
-      if (rsiChange >= this.evaluatorConfig.rsiIncrementThreshold) {
-        const priceChangeCase = isInWeakZoneLately
-          ? PriceChangeCases.JUMP_FROM_WEAK
-          : PriceChangeCases.JUMP;
-        return Option.some<EvaluationResult>({
-          symbol,
-          priceChangeCase,
-          rsiChange,
-          latestPrice,
-          latestRSI14: latestRSIs,
-        });
-      } else if (rsiChange <= -this.evaluatorConfig.rsiDecrementThreshold) {
-        const priceChangeCase = isInWeakZoneLately
-          ? PriceChangeCases.DROP_TO_WEAK
-          : PriceChangeCases.DROP;
+      const lastTwoRSIs = latestRSIs.slice(latestRSIs.length - 2);
+      const isInWeakZoneLately = lastTwoRSIs.some((rsi) => rsi <= 30);
+
+      let priceChangeCaseOpt: Option<PriceChangeCases> = Option.none();
+      if (isInWeakZoneLately && rsiChange >= this.evaluatorConfig.jumpFromWeakThreshold) {
+        priceChangeCaseOpt = Option.some<PriceChangeCases>(PriceChangeCases.JUMP_FROM_WEAK);
+      } else if (rsiChange >= this.evaluatorConfig.jumpThreshold) {
+        priceChangeCaseOpt = Option.some<PriceChangeCases>(PriceChangeCases.JUMP);
+      } else if (isInWeakZoneLately && rsiChange <= -this.evaluatorConfig.dropToWeakThreshold) {
+        priceChangeCaseOpt = Option.some<PriceChangeCases>(PriceChangeCases.DROP_TO_WEAK);
+      } else if (rsiChange <= -this.evaluatorConfig.dropThreshold) {
+        priceChangeCaseOpt = Option.some<PriceChangeCases>(PriceChangeCases.DROP);
+      }
+
+      if (priceChangeCaseOpt.isSome()) {
+        const priceChangeCase = priceChangeCaseOpt.unwrap();
         return Option.some<EvaluationResult>({
           symbol,
           priceChangeCase,
