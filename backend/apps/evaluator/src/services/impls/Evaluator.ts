@@ -14,6 +14,7 @@ import {NotificationQueue} from './NotificationQueue';
 export class Evaluator {
   private readonly logger = new Logger(Evaluator.name);
   private trading_signals!: any;
+  private stopSendingNotificationUntil: Map<string, number> = new Map();
 
   constructor(
     private readonly evaluatorConfig: EvaluatorConfig,
@@ -39,7 +40,15 @@ export class Evaluator {
         evaluationResult.okThen((evaluationOption) => {
           evaluationOption.someThen((evaluation) => {
             if (this.evaluatorConfig.enableNotiForCases.includes(evaluation.priceChangeCase)) {
-              evaluations.push(evaluation);
+              const evaluationKey = `${evaluation.symbol}:${evaluation.priceChangeCase}`;
+              const timeNow = Date.now();
+              if (timeNow >= (this.stopSendingNotificationUntil.get(evaluationKey) ?? 0)) {
+                evaluations.push(evaluation);
+                this.stopSendingNotificationUntil.set(
+                  evaluationKey,
+                  timeNow + this.evaluatorConfig.notiCooldownMinutes * 6e4,
+                );
+              }
             }
           });
         });

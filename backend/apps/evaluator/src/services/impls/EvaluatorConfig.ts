@@ -13,6 +13,7 @@ export class EvaluatorConfig {
   @Expose() jumpFromWeakThreshold = 5;
   @Expose() dropThreshold = 15;
   @Expose() dropToWeakThreshold = 5;
+  @Expose() notiCooldownMinutes = 5;
   @Expose() enableNotiForCases: string[] = [];
 
   private filled = false;

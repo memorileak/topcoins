@@ -17,8 +17,9 @@ export class Crontab {
     this.showError = this.showError.bind(this);
   }
 
-  // Runs every minutes, starting at 5 seconds past the minute
-  @Cron('5 * * * * *')
+  // Runs every 30 seconds, starting at 5 seconds past the minute
+  // and ending at 35 seconds past the minute
+  @Cron('5-35/30 * * * * *')
   async runEvaluatingAllSymbols(): Promise<void> {
     this.logger.debug('Running method: runEvaluatingAllSymbols');
     (await this.evaluator.evaluateAllSymbols()).errThen(this.showError);
