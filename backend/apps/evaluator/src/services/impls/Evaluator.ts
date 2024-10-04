@@ -44,6 +44,13 @@ export class Evaluator {
               const timeNow = Date.now();
               if (timeNow >= (this.stopSendingNotificationUntil.get(evaluationKey) ?? 0)) {
                 evaluations.push(evaluation);
+                // Reset cooldown time for all other price-change cases of the same coin.
+                // In other words, only set cooldown time for the same coin + same price-change case.
+                for (const kc in PriceChangeCases) {
+                  const c: string = (PriceChangeCases as Record<string, string>)[kc];
+                  const k = `${evaluation.symbol}:${c}`;
+                  this.stopSendingNotificationUntil.delete(k);
+                }
                 this.stopSendingNotificationUntil.set(
                   evaluationKey,
                   timeNow + this.evaluatorConfig.notiCooldownMinutes * 6e4,
