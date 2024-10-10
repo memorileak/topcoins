@@ -39,8 +39,11 @@ export class Evaluator {
         evaluationResult.errThen(this.handleError);
         evaluationResult.okThen((evaluationOption) => {
           evaluationOption.someThen((evaluation) => {
-            if (this.evaluatorConfig.enableNotiForCases.includes(evaluation.priceChangeCase)) {
-              const evaluationKey = `${evaluation.symbol}:${evaluation.priceChangeCase}`;
+            const evaluationKey = `${evaluation.symbol}:${evaluation.priceChangeCase}`;
+            if (
+              this.evaluatorConfig.enableNotiForCases.includes(evaluationKey) ||
+              this.evaluatorConfig.enableNotiForCases.includes(evaluation.priceChangeCase)
+            ) {
               const timeNow = Date.now();
               if (timeNow >= (this.stopSendingNotificationUntil.get(evaluationKey) ?? 0)) {
                 evaluations.push(evaluation);
