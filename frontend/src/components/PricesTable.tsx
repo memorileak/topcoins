@@ -198,8 +198,9 @@ const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList, kline15mSeriesLi
                 </td>
                 <td className="px-6 py-4 overflow-hidden whitespace-nowrap text-ellipsis">
                   <div className="w-full flex items-center">
-                    {rsichg.map((v) => (
+                    {rsichg.map((v, i) => (
                       <span
+                        key={i}
                         className={cl('inline-block w-10', {
                           'text-green-600': v > 0,
                           'text-red-600': v < 0,
