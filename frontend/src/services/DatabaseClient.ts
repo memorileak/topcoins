@@ -1,6 +1,6 @@
 import axios from 'axios';
-
-import {Result} from '../devkit';
+import {Either, left, orElseW} from 'fp-ts/Either';
+import {tryCatch} from 'fp-ts/TaskEither';
 
 export type QueryOutput = Record<string, any>[];
 
@@ -8,22 +8,25 @@ export class DatabaseClient {
   private readonly ENDPOINT = process.env.REACT_APP_DATABASE_ENDPOINT || '';
 
   constructor() {
-    this.showAndThrowError = this.showAndThrowError.bind(this);
+    this.showAndReturnErr = this.showAndReturnErr.bind(this);
   }
 
-  async query(q: string): Promise<Result<QueryOutput>>;
-  async query(q: string[]): Promise<Result<QueryOutput[]>>;
-  async query(q: string | string[]): Promise<Result<QueryOutput | QueryOutput[]>> {
-    let result = await Result.fromExecutionAsync(async () => {
-      const res = await axios.post(this.ENDPOINT, {q});
-      return res.data;
-    });
-    result = result.errThen(this.showAndThrowError);
-    return result;
+  async query(q: string): Promise<Either<unknown, QueryOutput>>;
+  async query(q: string[]): Promise<Either<unknown, QueryOutput[]>>;
+  async query(q: string | string[]): Promise<Either<unknown, QueryOutput | QueryOutput[]>> {
+    let either = await tryCatch<unknown, QueryOutput | QueryOutput[]>(
+      async () => {
+        const res = await axios.post(this.ENDPOINT, {q});
+        return res.data;
+      },
+      (err) => err,
+    )();
+    orElseW(this.showAndReturnErr)(either);
+    return either;
   }
 
-  private showAndThrowError(err: any): never {
+  private showAndReturnErr(err: any): Either<unknown, never> {
     console.error(err);
-    throw err;
+    return left(err);
   }
 }

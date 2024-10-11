@@ -1,4 +1,5 @@
 import {useCallback, useEffect, useState, createContext, useContext} from 'react';
+import {map} from 'fp-ts/Either';
 
 import {inject, Services} from '../services/injection';
 import {PriceDataSource} from '../services/PriceDataSource';
@@ -31,10 +32,8 @@ export function useSelectedSymbols(): SelectedSymbolsData {
 
   const [allSymbols, setAllSymbols] = useState<string[]>([]);
   useEffect(() => {
-    priceDataSource.getAllSymbols().then((result) => {
-      result.okThen((symbols) => {
-        setAllSymbols(symbols);
-      });
+    priceDataSource.getAllSymbols().then((either) => {
+      map<string[], void>((symbols) => setAllSymbols(symbols))(either);
     });
   }, [priceDataSource]);
 

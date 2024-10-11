@@ -1,4 +1,7 @@
 import {useCallback, useEffect, useState} from 'react';
+import * as TE from 'fp-ts/TaskEither';
+import {pipe} from 'fp-ts/function';
+import {map} from 'fp-ts/Either';
 
 import {inject, Services} from '../services/injection';
 import {PriceDataSource, PriceKlineSeries, PriceNow} from '../services/PriceDataSource';
@@ -35,10 +38,8 @@ export function usePriceData(): PriceData {
   const [reloadPriceKline1DToken, setReloadPriceKline1DToken] = useState<Symbol>(Symbol());
 
   useEffect(() => {
-    priceDataSource.getAllSymbols().then((result) => {
-      result.okThen((symbols) => {
-        setAllSymbols(symbols);
-      });
+    priceDataSource.getAllSymbols().then((either) => {
+      map<string[], void>((symbols) => setAllSymbols(symbols))(either);
     });
   }, [priceDataSource, reloadAllSymbolsToken]);
 
@@ -47,10 +48,8 @@ export function usePriceData(): PriceData {
   }, []);
 
   useEffect(() => {
-    priceDataSource.getAllSymbolCurrentPrices().then((result) => {
-      result.okThen((priceNowList) => {
-        setPriceNowList(priceNowList);
-      });
+    priceDataSource.getAllSymbolCurrentPrices().then((either) => {
+      map<PriceNow[], void>((priceNowList) => setPriceNowList(priceNowList))(either);
     });
   }, [priceDataSource, reloadPriceNowToken]);
 
@@ -60,12 +59,14 @@ export function usePriceData(): PriceData {
 
   useEffect(() => {
     (async () => {
-      const allSymbols = (await priceDataSource.getAllSymbols()).unwrap();
-      const klineSeriesList = (
-        await priceDataSource.getKline15MinutesIntervalOfSymbols(allSymbols)
-      ).unwrap();
-      return klineSeriesList;
-    })().then(setPriceKline15mSeriesList);
+      await pipe(
+        () => priceDataSource.getAllSymbols(),
+        TE.flatMap<string[], unknown, PriceKlineSeries[]>(
+          (symbols) => () => priceDataSource.getKline15MinutesIntervalOfSymbols(symbols),
+        ),
+        TE.map<PriceKlineSeries[], void>(setPriceKline15mSeriesList),
+      )();
+    })();
   }, [priceDataSource, reloadPriceKline15mToken]);
 
   const reloadPriceKline15mSeriesList = useCallback(() => {
@@ -74,12 +75,14 @@ export function usePriceData(): PriceData {
 
   useEffect(() => {
     (async () => {
-      const allSymbols = (await priceDataSource.getAllSymbols()).unwrap();
-      const klineSeriesList = (
-        await priceDataSource.getKline1HourIntervalOfSymbols(allSymbols)
-      ).unwrap();
-      return klineSeriesList;
-    })().then(setPriceKline1HSeriesList);
+      await pipe(
+        () => priceDataSource.getAllSymbols(),
+        TE.flatMap<string[], unknown, PriceKlineSeries[]>(
+          (symbols) => () => priceDataSource.getKline1HourIntervalOfSymbols(symbols),
+        ),
+        TE.map<PriceKlineSeries[], void>(setPriceKline1HSeriesList),
+      )();
+    })();
   }, [priceDataSource, reloadPriceKline1HToken]);
 
   const reloadPriceKline1HSeriesList = useCallback(() => {
@@ -88,12 +91,14 @@ export function usePriceData(): PriceData {
 
   useEffect(() => {
     (async () => {
-      const allSymbols = (await priceDataSource.getAllSymbols()).unwrap();
-      const klineSeriesList = (
-        await priceDataSource.getKline1DayIntervalOfSymbols(allSymbols)
-      ).unwrap();
-      return klineSeriesList;
-    })().then(setPriceKline1DSeriesList);
+      await pipe(
+        () => priceDataSource.getAllSymbols(),
+        TE.flatMap<string[], unknown, PriceKlineSeries[]>(
+          (symbols) => () => priceDataSource.getKline1DayIntervalOfSymbols(symbols),
+        ),
+        TE.map<PriceKlineSeries[], void>(setPriceKline1DSeriesList),
+      )();
+    })();
   }, [priceDataSource, reloadPriceKline1DToken]);
 
   const reloadPriceKline1DSeriesList = useCallback(() => {

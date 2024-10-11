@@ -1,9 +1,13 @@
 /* eslint-disable */
+import {pipe} from 'fp-ts/function';
+import * as O from 'fp-ts/Option';
+import * as TE from 'fp-ts/TaskEither';
+import {Option} from 'fp-ts/Option';
+import {Either, right, map, orElse, getOrElse, tryCatch, match} from 'fp-ts/Either';
 import {format as sql, escapeId} from 'sqlstring';
 import {RSI} from 'trading-signals';
 
-import {Option, Result} from '../devkit';
-import {DatabaseClient} from './DatabaseClient';
+import {DatabaseClient, QueryOutput} from './DatabaseClient';
 
 export class PriceNow {
   static fromRaw(raw: Record<string, any>): PriceNow {
@@ -90,48 +94,54 @@ export class PriceDataSource {
 
   constructor(opts: any) {
     this.databaseClient = opts.databaseClient;
-    this.cachedAllSymbols = Option.none();
+    this.cachedAllSymbols = O.none;
+    this.showAndReturnError = this.showAndReturnError.bind(this);
+    this.ignoreAndReturnError = this.ignoreAndReturnError.bind(this);
   }
 
-  getAllSymbols(): Promise<Result<string[]>> {
-    return Result.fromExecutionAsync(async () => {
-      if (this.cachedAllSymbols.isNone()) {
-        let result = await this.databaseClient.query(
+  async getAllSymbols(): Promise<Either<unknown, string[]>> {
+    if (O.isNone(this.cachedAllSymbols)) {
+      pipe(
+        await this.databaseClient.query(
           sql('SELECT DISTINCT symbol FROM price_now ORDER BY symbol ASC;'),
-        );
-        result.okThen((rows) => {
-          this.cachedAllSymbols = Option.some(rows.map((r) => r.symbol || ''));
-        });
-      }
-      return this.cachedAllSymbols.unwrapOr([]);
-    });
+        ),
+        map<QueryOutput, void>((rows) => {
+          this.cachedAllSymbols = O.some(rows.map((r) => r.symbol || ''));
+        }),
+        match(this.showAndReturnError, () => {}),
+      );
+    }
+    return right(O.getOrElse<string[]>(() => [])(this.cachedAllSymbols));
   }
 
-  getAllSymbolCurrentPrices(): Promise<Result<PriceNow[]>> {
-    return Result.fromExecutionAsync(async () => {
-      let result = await this.databaseClient.query(sql('SELECT rowid, * FROM price_now;'));
-      return result.unwrapOr([]).map((r) => PriceNow.fromRaw(r));
-    });
+  async getAllSymbolCurrentPrices(): Promise<Either<unknown, PriceNow[]>> {
+    return pipe(
+      await this.databaseClient.query(
+        sql('SELECT DISTINCT symbol FROM price_now ORDER BY symbol ASC;'),
+      ),
+      map<QueryOutput, PriceNow[]>((rows) => rows.map((r) => PriceNow.fromRaw(r))),
+      orElse<unknown, PriceNow[], unknown>(() => right([])),
+    );
   }
 
   getKline15MinutesIntervalOfSymbols(
     symbols: string[],
     limit?: number,
-  ): Promise<Result<PriceKlineSeries[]>> {
+  ): Promise<Either<unknown, PriceKlineSeries[]>> {
     return this.getKlineDataOfSymbols('price_kline_15m', symbols, limit);
   }
 
   getKline1HourIntervalOfSymbols(
     symbols: string[],
     limit?: number,
-  ): Promise<Result<PriceKlineSeries[]>> {
+  ): Promise<Either<unknown, PriceKlineSeries[]>> {
     return this.getKlineDataOfSymbols('price_kline_1h', symbols, limit);
   }
 
   getKline1DayIntervalOfSymbols(
     symbols: string[],
     limit?: number,
-  ): Promise<Result<PriceKlineSeries[]>> {
+  ): Promise<Either<unknown, PriceKlineSeries[]>> {
     return this.getKlineDataOfSymbols('price_kline_1d', symbols, limit);
   }
 
@@ -139,8 +149,8 @@ export class PriceDataSource {
     table: string,
     symbols: string[],
     limit?: number,
-  ): Promise<Result<PriceKlineSeries[]>> {
-    return Result.fromExecutionAsync(async () => {
+  ): Promise<Either<unknown, PriceKlineSeries[]>> {
+    return TE.tryCatch<unknown, PriceKlineSeries[]>(async () => {
       const lim = limit ?? 64;
       const queries = symbols.map((symbol) =>
         sql(`SELECT * FROM ${escapeId(table)} WHERE symbol = ? ORDER BY open_time DESC LIMIT ?;`, [
@@ -149,8 +159,8 @@ export class PriceDataSource {
         ]),
       );
 
-      const result = await this.databaseClient.query(queries);
-      const priceKlineSeriesListRaw = result.unwrapOr([]);
+      const either = await this.databaseClient.query(queries);
+      const priceKlineSeriesListRaw = getOrElse<unknown, QueryOutput[]>(() => [])(either);
       const priceKlineSeriesList: PriceKlineSeries[] = [];
 
       for (let i = 0; i < priceKlineSeriesListRaw.length; i += 1) {
@@ -160,22 +170,40 @@ export class PriceDataSource {
         const rsi14Indexer = new RSI(14);
         for (const pk of priceKlineData) {
           rsi14Indexer.update(pk.lowPrice);
-          pk.rsi14Min = Result.fromExecution(() =>
-            parseFloat(rsi14Indexer.getResult().toFixed(2)),
-          ).unwrapOr(0);
+          pk.rsi14Min = getOrElse<unknown, number>(() => 0)(
+            tryCatch(
+              () => parseFloat(rsi14Indexer.getResult().toFixed(2)),
+              this.ignoreAndReturnError,
+            ),
+          );
           rsi14Indexer.replace(pk.highPrice);
-          pk.rsi14Max = Result.fromExecution(() =>
-            parseFloat(rsi14Indexer.getResult().toFixed(2)),
-          ).unwrapOr(0);
+          pk.rsi14Max = getOrElse<unknown, number>(() => 0)(
+            tryCatch<unknown, number>(
+              () => parseFloat(rsi14Indexer.getResult().toFixed(2)),
+              this.ignoreAndReturnError,
+            ),
+          );
           rsi14Indexer.replace(pk.closePrice);
-          pk.rsi14 = Result.fromExecution(() =>
-            parseFloat(rsi14Indexer.getResult().toFixed(2)),
-          ).unwrapOr(0);
+          pk.rsi14 = getOrElse<unknown, number>(() => 0)(
+            tryCatch<unknown, number>(
+              () => parseFloat(rsi14Indexer.getResult().toFixed(2)),
+              this.ignoreAndReturnError,
+            ),
+          );
         }
         priceKlineSeriesList.push({symbol, rsi14Indexer, priceKlineData});
       }
 
       return priceKlineSeriesList;
-    });
+    }, this.showAndReturnError)();
+  }
+
+  private showAndReturnError(err: any): unknown {
+    console.error(err);
+    return err;
+  }
+
+  private ignoreAndReturnError(err: any): unknown {
+    return err;
   }
 }

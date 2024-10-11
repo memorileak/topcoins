@@ -1,6 +1,6 @@
 import {FC, useCallback, useEffect, useMemo, useRef} from 'react';
+import {tryCatch, getOrElse} from 'fp-ts/Either';
 
-import {Result} from './devkit';
 import {PriceKlineSeries, PriceNow} from './services/PriceDataSource';
 import {usePriceData} from './hooks/usePriceData';
 import {SelectedSymbolsContext, useSelectedSymbols} from './hooks/useSelectedSymbolsContext';
@@ -30,19 +30,28 @@ function updateKlineSeriesListWithPriceNowList(
         latestPrice < latestKline.lowPrice ? latestPrice : latestKline.lowPrice;
 
       klineSeries.rsi14Indexer.replace(latestKline.lowPrice);
-      latestKline.rsi14Min = Result.fromExecution(() =>
-        parseFloat(klineSeries.rsi14Indexer.getResult().toFixed(2)),
-      ).unwrapOr(0);
+      latestKline.rsi14Min = getOrElse(() => 0)(
+        tryCatch(
+          () => parseFloat(klineSeries.rsi14Indexer.getResult().toFixed(2)),
+          (err) => err,
+        ),
+      );
 
       klineSeries.rsi14Indexer.replace(latestKline.highPrice);
-      latestKline.rsi14Max = Result.fromExecution(() =>
-        parseFloat(klineSeries.rsi14Indexer.getResult().toFixed(2)),
-      ).unwrapOr(0);
+      latestKline.rsi14Max = getOrElse(() => 0)(
+        tryCatch(
+          () => parseFloat(klineSeries.rsi14Indexer.getResult().toFixed(2)),
+          (err) => err,
+        ),
+      );
 
       klineSeries.rsi14Indexer.replace(latestKline.closePrice);
-      latestKline.rsi14 = Result.fromExecution(() =>
-        parseFloat(klineSeries.rsi14Indexer.getResult().toFixed(2)),
-      ).unwrapOr(0);
+      latestKline.rsi14 = getOrElse(() => 0)(
+        tryCatch(
+          () => parseFloat(klineSeries.rsi14Indexer.getResult().toFixed(2)),
+          (err) => err,
+        ),
+      );
     }
   }
 
