@@ -94,7 +94,7 @@ export function usePriceData(): PriceData {
       await pipe(
         () => priceDataSource.getAllSymbols(),
         TE.flatMap<string[], unknown, PriceKlineSeries[]>(
-          (symbols) => () => priceDataSource.getKline1DayIntervalOfSymbols(symbols),
+          (symbols) => () => priceDataSource.getKline1DayIntervalOfSymbols(symbols, 118),
         ),
         TE.map<PriceKlineSeries[], void>(setPriceKline1DSeriesList),
       )();
