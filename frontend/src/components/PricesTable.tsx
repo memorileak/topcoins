@@ -93,7 +93,7 @@ const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList, kline15mSeriesLi
             </th>
             <th
               scope="col"
-              className="w-1/5 px-6 py-3 overflow-hidden whitespace-nowrap text-ellipsis"
+              className="w-1/4 px-6 py-3 overflow-hidden whitespace-nowrap text-ellipsis"
             >
               Price
             </th>
@@ -103,10 +103,7 @@ const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList, kline15mSeriesLi
             <th scope="col" className="px-6 py-3 overflow-hidden whitespace-nowrap text-ellipsis">
               Volume
             </th>
-            <th
-              scope="col"
-              className="w-1/3 px-6 py-3 overflow-hidden whitespace-nowrap text-ellipsis"
-            >
+            <th scope="col" className="px-6 py-3 overflow-hidden whitespace-nowrap text-ellipsis">
               RSIChg 15m
             </th>
           </tr>
