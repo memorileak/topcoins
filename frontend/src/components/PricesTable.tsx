@@ -28,11 +28,11 @@ type Symbol1DStats = {
   todayQuotVol: number;
   todayOpenPrice: number;
   todayLatestPrice: number;
+  todayChange: number;
 };
 
 type Symbol15mStats = {
-  rsival: [number, number, number];
-  rsichg: [number, number, number];
+  rsichg: number;
 };
 
 const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList, kline15mSeriesList}) => {
@@ -44,7 +44,11 @@ const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList, kline15mSeriesLi
       const todayQuotVol = klineData[klineData.length - 1]?.quotVol ?? 0;
       const todayOpenPrice = klineData[klineData.length - 1]?.openPrice ?? 0;
       const todayLatestPrice = klineData[klineData.length - 1]?.closePrice ?? 0;
-      symbol1DStats[symbol] = {todayQuotVol, todayOpenPrice, todayLatestPrice};
+      const todayChange =
+        todayOpenPrice > 0
+          ? Math.round(100 * ((100 * (todayLatestPrice - todayOpenPrice)) / todayOpenPrice)) / 100
+          : 0;
+      symbol1DStats[symbol] = {todayQuotVol, todayOpenPrice, todayLatestPrice, todayChange};
     }
     return symbol1DStats;
   }, [kline1DSeriesList]);
@@ -59,19 +63,11 @@ const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList, kline15mSeriesLi
         const klineData = kline15mSeries.priceKlineData || [];
         const previousKline = klineData[klineData.length - 2];
         const latestKline = klineData[klineData.length - 1];
-
         const rsiPrev = previousKline?.rsi14 ?? 0;
         const rsiCurrent = latestKline?.rsi14 ?? 0;
-        const rsiMin = latestKline?.rsi14Min ?? 0;
-        const rsiMax = latestKline?.rsi14Max ?? 0;
-
         const diffVsPrev = previousKline ? rsiCurrent - rsiPrev : 0;
-        const diffVsMin = rsiCurrent - rsiMin;
-        const diffVsMax = rsiCurrent - rsiMax;
-
         newMap[symbol] = {
-          rsival: [rsiCurrent, rsiMin, rsiMax],
-          rsichg: [diffVsPrev, diffVsMin, diffVsMax],
+          rsichg: diffVsPrev,
         };
       }
 
@@ -81,9 +77,9 @@ const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList, kline15mSeriesLi
 
   const sortedSymbols = useMemo<string[]>(() => {
     return [...allSymbols].sort((a, b) => {
-      return (mapSymbol15mStats[a]?.rsichg?.[0] || 0) - (mapSymbol15mStats[b]?.rsichg?.[0] || 0);
+      return (mapSymbol1DStats[b]?.todayQuotVol || 0) - (mapSymbol1DStats[a]?.todayQuotVol || 0);
     });
-  }, [allSymbols, mapSymbol15mStats]);
+  }, [allSymbols, mapSymbol1DStats]);
 
   const {selectedSymbols, handleToggleSymbol} = useSelectedSymbolsContext();
 
@@ -120,28 +116,10 @@ const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList, kline15mSeriesLi
             const todayQuotVol = mapSymbol1DStats[s]?.todayQuotVol || 0;
             const todayOpenPrice = mapSymbol1DStats[s]?.todayOpenPrice || 0;
             const todayLatestPrice = mapSymbol1DStats[s]?.todayLatestPrice || 0;
-            const todayChange =
-              todayOpenPrice > 0
-                ? Math.round(100 * ((100 * (todayLatestPrice - todayOpenPrice)) / todayOpenPrice)) /
-                  100
-                : 0;
-            const rsichg = (mapSymbol15mStats[s]?.rsichg || [0, 0, 0]).map((v) => r(v));
-            const rsival = (mapSymbol15mStats[s]?.rsival || [0, 0, 0]).map((v) => r(v));
-
-            const [rsiDiff] = rsichg;
-            const isPriceDropSignificantly = rsiDiff <= -10;
-            const isPriceJumpSignificantly = rsiDiff >= 10;
-            if (isPriceJumpSignificantly || isPriceDropSignificantly) {
-              console.log(
-                new Date().toLocaleString(),
-                isPriceJumpSignificantly ? '[JUMP]' : '[DROP]',
-                `[${baseCoinOnly(s)}]`,
-                'RSI Values:',
-                JSON.stringify(rsival),
-                'RSI Change:',
-                JSON.stringify(rsichg),
-              );
-            }
+            const todayChange = mapSymbol1DStats[s]?.todayChange || 0;
+            const rsichg = r(mapSymbol15mStats[s]?.rsichg || 0);
+            const isPriceDropSignificantly = rsichg <= -10;
+            const isPriceJumpSignificantly = rsichg >= 10;
 
             return (
               <tr
@@ -198,17 +176,14 @@ const PricesTable: FC<Props> = ({allSymbols, kline1DSeriesList, kline15mSeriesLi
                 </td>
                 <td className="px-6 py-4 overflow-hidden whitespace-nowrap text-ellipsis">
                   <div className="w-full flex items-center">
-                    {rsichg.map((v, i) => (
-                      <span
-                        key={i}
-                        className={cl('inline-block w-10', {
-                          'text-green-600': v > 0,
-                          'text-red-600': v < 0,
-                        })}
-                      >
-                        {v}
-                      </span>
-                    ))}
+                    <span
+                      className={cl('inline-block w-10', {
+                        'text-green-600': rsichg > 0,
+                        'text-red-600': rsichg < 0,
+                      })}
+                    >
+                      {rsichg}
+                    </span>
                   </div>
                 </td>
               </tr>
